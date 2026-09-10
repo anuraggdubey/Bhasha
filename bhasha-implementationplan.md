@@ -1,4 +1,4 @@
-# Bhasha Relay — Master Technical Implementation Plan
+# Bhasha — Master Technical Implementation Plan
 ### "One Meaning, Every Language"
 **AssemblyAI Voice Hackathon Week: Hack into Dictation (Sept 9–13, 2026)**
 
@@ -6,13 +6,13 @@
 
 ## 1. Project Overview & Core Philosophy
 
-**Bhasha Relay** is a voice-first task handoff and orchestration system designed for multilingual teams. In modern global and regional teams (e.g., in India, Southeast Asia, or global remote hubs), individuals naturally think and speak in code-switched dialects (e.g., Hinglish: mixing Hindi and English). 
+**Bhasha** is a voice-first task handoff and orchestration system designed for multilingual teams. In modern global and regional teams (e.g., in India, Southeast Asia, or global remote hubs), individuals naturally think and speak in code-switched dialects (e.g., Hinglish: mixing Hindi and English). 
 
 ### The Problem
 Traditional translation tools translate *sentences* sequentially (e.g., Manager $\rightarrow$ English $\rightarrow$ Hindi $\rightarrow$ Japanese). This causes **semantic fact drift** — critical numbers, names, deadlines, and conditional clauses silently morph or get dropped (e.g., "4 PM" becoming "4 AM", or "only after tests pass" being translated away).
 
 ### The Solution: The Meaning Packet
-Bhasha Relay does **not** perform sentence-to-sentence translation. Instead, it extracts the input speech into a single canonical, language-agnostic data structure: the **Meaning Packet**.
+Bhasha does **not** perform sentence-to-sentence translation. Instead, it extracts the input speech into a single canonical, language-agnostic data structure: the **Meaning Packet**.
 - **Locked Fields (🔒)**: Names, dates, times, numerical amounts, and logical constraints. Extracted once, validated, and injected verbatim or transliterated across all renders.
 - **Flexible Fields**: The conversational action clause, which is rendered naturally and idiomatically into each recipient's chosen language.
 - **Voice-Driven Delta Corrections**: Teammates can speak corrections (e.g., *"Actually push it to 5 PM"*), mutating the central Meaning Packet, which immediately cascades across all language views.

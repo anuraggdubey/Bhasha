@@ -1,4 +1,4 @@
-# Bhasha Relay (भाषा रिले)
+# Bhasha (भाषा)
 ### *One Meaning, Every Language*
 **Voice-First Task Handoff System for Multilingual Teams**
 
@@ -9,11 +9,11 @@
 
 ---
 
-## 📖 1. What is Bhasha Relay?
+## 📖 1. What is Bhasha?
 
 Multilingual teams lose precision at the handoff moment, not the conversation moment. A manager gives a spoken instruction in **Hinglish** (Hindi + English). Traditional translation tools translate *sentences*, allowing critical numbers, deadlines, and conditions to drift across hops (e.g., *"4 PM"* becoming *"4 AM"* or conditions being silently dropped).
 
-**Bhasha Relay** solves this by extracting spoken instructions into an intermediate, language-independent **Meaning Packet** with **Locked Facts (🔒)**.
+**Bhasha** solves this by extracting spoken instructions into an intermediate, language-independent **Meaning Packet** with **Locked Facts (🔒)**.
 - **Locked Fields (🔒)**: Names, dates, times, and gating conditions are extracted once and held invariant.
 - **Flexible Phrasing**: The task intent is phrased naturally and idiomatically into each teammate's preferred language (Hindi, Japanese, English).
 - **Voice Delta Loop**: Speaking a quick voice correction (*"Actually make that 5 PM"*) mutates the shared Meaning Packet and refreshes all team views simultaneously.
@@ -83,7 +83,7 @@ Multilingual teams lose precision at the handoff moment, not the conversation mo
 
 ## 🌐 5. Deployment to Vercel
 
-Bhasha Relay is built as a unified full-stack Next.js app optimized for direct deployment to Vercel.
+Bhasha is built as a unified full-stack Next.js app optimized for direct deployment to Vercel.
 
 1. Push your repository to GitHub.
 2. Go to [Vercel Dashboard](https://vercel.com/new) and click **Import Project**.
@@ -124,7 +124,7 @@ Bhasha Relay is built as a unified full-stack Next.js app optimized for direct d
 Bhasha/
 ├── README.md                          # Master documentation & setup guide
 ├── bhasha-implementationplan.md       # Detailed engineering implementation plan
-├── bhasha-relay-documentation.md      # Product architecture & design brief
+├── bhasha-documentation.md            # Product architecture & design brief
 ├── package.json                       # Next.js 14 fullstack dependencies
 ├── tsconfig.json                      # Path aliases (@/*)
 ├── tailwind.config.ts                 # Custom dark glassmorphism design tokens

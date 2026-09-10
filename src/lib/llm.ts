@@ -22,7 +22,7 @@ export async function extractMeaningPacket(transcript: string): Promise<MeaningP
   }
 
   try {
-    const prompt = `You are the Bhasha Relay extraction engine.
+    const prompt = `You are the Bhasha extraction engine.
 Given this code-switched or multilingual speech transcript:
 "${transcript}"
 

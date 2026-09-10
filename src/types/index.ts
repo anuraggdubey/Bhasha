@@ -1,5 +1,5 @@
 // ==============================================================================
-// Bhasha Relay — Core Type Definitions & Data Contracts
+// Bhasha — Core Type Definitions & Data Contracts
 // Single Source of Truth for Dev 1 (Joshna), Dev 2 (Saloni), and Dev 3 (Anurag)
 // ==============================================================================
 

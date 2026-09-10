@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Bhasha Relay — One Meaning, Every Language',
+  title: 'Bhasha — One Meaning, Every Language',
   description:
     'Voice-first task handoff system for multilingual teams powered by AssemblyAI Dictation API and Fact-Locked Meaning Packets.',
 };

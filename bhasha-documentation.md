@@ -1,11 +1,11 @@
-# Bhasha Relay
+# Bhasha
 ### One meaning, every language
 
 ---
 
 ## 1. One-Line Pitch
 
-Bhasha Relay is a voice-first task handoff system for multilingual teams: someone speaks naturally in whatever language mix comes to them, and everyone else on the team gets the exact same instruction — correct names, numbers, deadlines, and conditions — in their own preferred language.
+Bhasha is a voice-first task handoff system for multilingual teams: someone speaks naturally in whatever language mix comes to them, and everyone else on the team gets the exact same instruction — correct names, numbers, deadlines, and conditions — in their own preferred language.
 
 ---
 
@@ -24,7 +24,7 @@ Nothing sits at the intersection: **spoken, multilingual, and fact-locked.**
 
 ## 3. What It Is
 
-Bhasha Relay does not translate sentences. It extracts the *meaning* of a spoken instruction into a structured, language-independent object — the **Meaning Packet** — and then renders that same packet into each teammate's preferred language on demand. Because every language version is generated from the same underlying packet (not from each other), critical facts can be locked so they cannot silently change in translation.
+Bhasha does not translate sentences. It extracts the *meaning* of a spoken instruction into a structured, language-independent object — the **Meaning Packet** — and then renders that same packet into each teammate's preferred language on demand. Because every language version is generated from the same underlying packet (not from each other), critical facts can be locked so they cannot silently change in translation.
 
 **Example:**
 
@@ -49,7 +49,7 @@ Rahul sees this in Hindi. A Japanese teammate sees it in Japanese. Both see the 
 
 The most common criticism of an idea like this is fair: *"isn't this just AssemblyAI plus a translation prompt?"* Here's the actual difference, stated plainly:
 
-| | Plain translation | Bhasha Relay |
+| | Plain translation | Bhasha |
 |---|---|---|
 | Unit of work | Sentence | Structured task (owner, deadline, condition, action) |
 | Source of truth | Each language version, translated from the last | One shared Meaning Packet, rendered into each language |
@@ -119,7 +119,7 @@ When a teammate corrects or confirms a task by voice, the correction updates the
 ## 7. How Users Use It (User Journey)
 
 **As a manager (sender):**
-1. Open Bhasha Relay, press the mic button.
+1. Open Bhasha, press the mic button.
 2. Speak the instruction naturally — no need to pick a language or slow down for code-switching.
 3. Review the extracted task card before sending (task, owner, deadline, condition shown clearly, locked fields marked).
 4. Send. Done.
@@ -151,7 +151,7 @@ No one manually translates anything at any point.
 - **Uses the required API directly**: the entire pipeline is built on AssemblyAI's beta Dictation API — not a generic Whisper/ChatGPT stand-in.
 - **Showcases the API's flagship capability**: native code-switching across languages (Universal-3.5 Pro) and clean, filler-free transcription are the whole reason the extraction step works reliably — the demo depends on and highlights this, rather than treating it as incidental.
 - **Matches the event's stated target audience**: the event calls out people "building AI agents or AI-native applications" and people "experimenting with memory, context retrieval, or knowledge systems" — the Meaning Packet *is* a small structured knowledge/context object, not just a transcript.
-- **Extends the event's own framing**: AssemblyAI's pitch is "dictation is becoming the default input method, everywhere." Bhasha Relay takes that literally for teams, not just individuals — the mic replaces typing *and* manual translation *and* re-explaining yourself.
+- **Extends the event's own framing**: AssemblyAI's pitch is "dictation is becoming the default input method, everywhere." Bhasha takes that literally for teams, not just individuals — the mic replaces typing *and* manual translation *and* re-explaining yourself.
 - **Fits the format**: buildable solo or in a team of up to 4, deliverable as a working web demo within the hackathon window (Sept 9–13, 2026), no external integrations required for the MVP.
 
 ---
@@ -208,7 +208,7 @@ This is the moment that answers the "isn't this just a translation prompt" objec
 
 ## 14. Closing Pitch
 
-> Translators help people understand words. Bhasha Relay helps multilingual teams agree on exactly what must happen.
+> Translators help people understand words. Bhasha helps multilingual teams agree on exactly what must happen.
 
 ---
 

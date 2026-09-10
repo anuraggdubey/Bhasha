@@ -129,11 +129,11 @@ export default function Home() {
           <div>
             <div className="flex items-center gap-3">
               <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-400 text-slate-950 font-black text-xl shadow-lg shadow-teal-500/20">
-                BR
+                B
               </span>
               <div>
                 <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-                  Bhasha Relay
+                  Bhasha
                   <span className="text-xs font-mono font-medium px-2.5 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/30">
                     Universal-3.5 Pro
                   </span>
