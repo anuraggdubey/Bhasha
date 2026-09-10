@@ -231,7 +231,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-slate-800/80 pt-6 text-center text-xs text-slate-500">
         <p>
-          Built for <strong className="text-slate-300">AssemblyAI Voice Hackathon Week 2026</strong> • Team: Joshna (Dev 1), Saloni (Dev 2), Anurag (Dev 3)
+          <strong className="text-slate-300">Bhasha</strong> — Voice-first task handoff and orchestration for multilingual teams. Powered by AssemblyAI Universal-3.5 Pro.
         </p>
       </footer>
     </main>
