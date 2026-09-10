@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Sparkles, Volume2, AlertCircle } from 'lucide-react';
+import { Mic, Square, Sparkles, Volume2, AlertCircle, Radio, Clock, ShieldAlert } from 'lucide-react';
 import { SAMPLE_AUDIO_CASES } from '@/lib/mockData';
 
 interface AudioRecorderProps {
@@ -97,7 +97,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       drawWaveform();
     } catch (err: any) {
       console.error('Microphone access denied:', err);
-      setErrorMessage('Microphone access was denied. You can still click "Try Demo Hinglish Sample" below!');
+      setErrorMessage('Microphone access not granted. Click a Demo Sample below to experience the zero-drift pipeline instantly!');
     }
   };
 
@@ -117,37 +117,45 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
     onTranscriptReady(SAMPLE_AUDIO_CASES[index].transcript);
   };
 
+  // Additional 3rd sample for variety
+  const triggerHotfixDemo = () => {
+    onTranscriptReady(
+      "Kenji-san, critical memory leak in payment gateway. Deploy hotfix patch immediately before market open at 9 AM Tokyo time. Tests must pass."
+    );
+  };
+
   return (
-    <div className="w-full glass-panel rounded-2xl p-6 border border-teal-500/20 shadow-2xl relative overflow-hidden">
+    <div className="w-full glass-panel-elevated rounded-2xl p-6 border border-teal-500/25 shadow-2xl relative overflow-hidden">
+      {/* Ambient background glow */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-6 relative z-10">
+        <div className="flex items-center gap-5">
           <button
             onClick={isRecording ? stopRecording : startRecording}
             disabled={isProcessing}
-            className={`relative flex items-center justify-center w-16 h-16 rounded-full transition-all duration-300 shadow-lg ${
+            className={`relative flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 shadow-xl ${
               isRecording
                 ? 'bg-rose-600 hover:bg-rose-700 ring-4 ring-rose-500/40 animate-pulse'
-                : 'bg-gradient-to-tr from-teal-600 to-emerald-500 hover:from-teal-500 hover:to-emerald-400 hover:scale-105 ring-4 ring-teal-500/20'
+                : 'bg-gradient-to-tr from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 hover:scale-105 ring-4 ring-teal-500/20'
             } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-            title={isRecording ? 'Click to stop' : 'Click to speak'}
+            title={isRecording ? 'Click to stop recording' : 'Click to speak task in Hinglish/English/Hindi'}
           >
             {isRecording ? (
               <Square className="w-6 h-6 text-white" />
             ) : (
-              <Mic className="w-7 h-7 text-white" />
+              <Mic className="w-7 h-7 text-slate-950" />
             )}
           </button>
 
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-bold text-slate-100">
+            <div className="flex items-center gap-2.5">
+              <h3 className="text-lg font-extrabold text-slate-100">
                 {isRecording
                   ? 'Listening (Speak Hinglish, Hindi, or English)...'
                   : isProcessing
-                  ? 'Processing AssemblyAI Dictation...'
-                  : 'Press Mic to Dispatch Task'}
+                  ? 'Transcribing & Extracting Meaning Packet...'
+                  : 'Dispatch Voice Task'}
               </h3>
               {isRecording && (
                 <span className="flex h-2.5 w-2.5 relative">
@@ -156,39 +164,50 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Powered by AssemblyAI Universal-3.5 Pro with native code-switching and noise suppression.
+            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+              <span>Powered by AssemblyAI Universal-3.5 Pro</span>
+              <span className="text-slate-600">•</span>
+              <span className="text-teal-400 font-mono">Code-Switching Ready</span>
             </p>
           </div>
         </div>
 
         {/* Live Audio Visualizer or Demo Quick-Triggers */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
           {isRecording ? (
-            <div className="flex items-center gap-3 bg-slate-900/60 px-4 py-2 rounded-xl border border-slate-800">
+            <div className="flex items-center gap-3 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-700 shadow-inner">
               <canvas ref={canvasRef} width="160" height="36" className="rounded" />
-              <span className="font-mono text-sm text-teal-300 font-semibold">
-                00:{recordSeconds < 10 ? `0${recordSeconds}` : recordSeconds}
-              </span>
+              <div className="flex items-center gap-1.5 font-mono text-sm text-teal-300 font-bold">
+                <Clock className="w-3.5 h-3.5 text-teal-400 animate-spin" />
+                <span>00:{recordSeconds < 10 ? `0${recordSeconds}` : recordSeconds}</span>
+              </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 font-medium mr-1">Demo Quick-Loads:</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-slate-400 font-mono font-medium mr-1">One-Click Samples:</span>
               <button
                 onClick={() => triggerSampleDemo(0)}
                 disabled={isProcessing}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-950/80 hover:bg-teal-900 text-teal-300 border border-teal-700/50 transition-all shadow-sm hover:shadow"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-teal-950/80 hover:bg-teal-900 text-teal-300 border border-teal-700/60 transition-all shadow-sm hover:scale-[1.02]"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                Hinglish Deployment Sample
+                <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+                Hinglish Dispatch
               </button>
               <button
                 onClick={() => triggerSampleDemo(1)}
                 disabled={isProcessing}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-950/60 hover:bg-amber-900/80 text-amber-300 border border-amber-700/40 transition-all shadow-sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-950/60 hover:bg-amber-900/80 text-amber-300 border border-amber-700/50 transition-all shadow-sm hover:scale-[1.02]"
               >
-                <Volume2 className="w-3.5 h-3.5" />
-                Shift to 5 PM Delta
+                <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+                Shift to 5 PM
+              </button>
+              <button
+                onClick={triggerHotfixDemo}
+                disabled={isProcessing}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-700/50 transition-all shadow-sm hover:scale-[1.02]"
+              >
+                <ShieldAlert className="w-3.5 h-3.5 text-indigo-400" />
+                Hotfix Tokyo
               </button>
             </div>
           )}
@@ -196,8 +215,8 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       </div>
 
       {errorMessage && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-amber-300 bg-amber-950/40 border border-amber-800/60 px-3 py-2 rounded-lg">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+        <div className="mt-4 flex items-center gap-2 text-xs text-amber-300 bg-amber-950/40 border border-amber-800/60 px-3.5 py-2.5 rounded-xl">
+          <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-400" />
           <span>{errorMessage}</span>
         </div>
       )}

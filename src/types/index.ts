@@ -66,7 +66,7 @@ export interface TeammateProfile {
   id: string;
   name: string;
   role: string;
-  preferred_language: 'en' | 'hi' | 'ja';
+  preferred_language: 'en' | 'hi' | 'ja' | 'es' | 'de' | 'fr' | 'zh' | string;
   language_label: string;
   avatar: string;
   is_current_sender?: boolean;
