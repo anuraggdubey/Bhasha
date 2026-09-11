@@ -3,6 +3,9 @@
 import React from 'react';
 import Link from 'next/link';
 import { Mic, Globe, ShieldCheck, ArrowRight, Check, ArrowUpRight } from 'lucide-react';
+import Mascot from '../components/Mascot';
+import FAQ from '../components/FAQ';
+import FeatureBento from '../components/FeatureBento';
 
 export default function LandingPage() {
   return (
@@ -40,23 +43,35 @@ export default function LandingPage() {
         <div className="flex flex-col sm:flex-row items-center gap-3.5 mb-16">
           <Link
             href="/studio"
-            className="inline-flex items-center justify-center gap-2 px-8 h-13 rounded-full text-base font-medium bg-[#252522] hover:bg-[#3A3A34] text-[#FFFCFA] shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="inline-flex items-center justify-center gap-2 px-8 h-16 rounded-full text-lg font-medium bg-[#252522] hover:bg-[#3A3A34] text-[#FFFCFA] shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
-            <Mic className="w-4 h-4 text-[#D1E043]" />
+            <Mic className="w-5 h-5 text-[#D1E043]" />
             <span>Open Voice Studio</span>
           </Link>
 
           <Link
             href="/team"
-            className="inline-flex items-center justify-center gap-2 px-7 h-13 rounded-full text-base font-medium bg-white hover:bg-[#F7F7F2] border border-black/[0.1] text-[#252522] shadow-xs transition-all hover:border-black/[0.2]"
+            className="inline-flex items-center justify-center gap-2 px-7 h-16 rounded-full text-lg font-medium bg-white hover:bg-[#F7F7F2] border border-black/[0.1] text-[#252522] shadow-xs transition-all hover:border-black/[0.2]"
           >
             <span>Explore Team Relay (18 Locales)</span>
           </Link>
         </div>
 
         {/* Interactive Window Stage - Strawberry macOS Window & Granola Notepad Sheet */}
-        <div className="w-full max-w-5xl rounded-3xl border border-black/[0.08] bg-white p-6 sm:p-8 shadow-xl shadow-black/[0.04] text-left relative overflow-hidden">
-          {/* Window Header */}
+        <div className="relative w-full max-w-5xl mx-auto">
+          {/* Mascots sitting on the top border of the window — exact Strawberry hero layout */}
+          <div className="absolute top-0 left-4 sm:left-8 flex items-end z-20 pointer-events-none" style={{ transform: 'translateY(-72%)' }}>
+            <Mascot color="blue-sitting" size={130} className="translate-y-1" />
+            <Mascot color="blue" size={145} className="-ml-3" />
+          </div>
+          
+          <div className="absolute top-0 right-4 sm:right-8 flex items-end z-20 pointer-events-none" style={{ transform: 'translateY(-70%)' }}>
+            <Mascot color="green" size={140} />
+            <Mascot color="red" size={140} className="-ml-2" />
+          </div>
+
+          <div className="w-full rounded-3xl border border-black/[0.08] bg-white p-6 sm:p-8 shadow-xl shadow-black/[0.04] text-left relative overflow-hidden">
+            {/* Window Header */}
           <div className="flex items-center justify-between pb-5 border-b border-black/[0.06] mb-6">
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-[#FF5F56]"></span>
@@ -129,13 +144,13 @@ export default function LandingPage() {
                 <div className="space-y-2">
                   <div className="p-2.5 rounded-lg bg-white border border-black/[0.06] shadow-xs">
                     <div className="flex items-center gap-1.5 text-xs text-[#7A7A72] font-mono mb-1">
-                      <span>🇯🇵 Japanese (Kenji)</span>
+                      <span suppressHydrationWarning>🇯🇵 Japanese (Kenji)</span>
                     </div>
                     <p className="text-xs text-[#252522]">テスト合格後にRahulがデプロイ実行 (明日午後4時)</p>
                   </div>
                   <div className="p-2.5 rounded-lg bg-white border border-black/[0.06] shadow-xs">
                     <div className="flex items-center gap-1.5 text-xs text-[#7A7A72] font-mono mb-1">
-                      <span>🇩🇪 German (Elena)</span>
+                      <span suppressHydrationWarning>🇩🇪 German (Elena)</span>
                     </div>
                     <p className="text-xs text-[#252522]">Rahul führt Deployment nach Test-Bestehen bis 16 Uhr durch</p>
                   </div>
@@ -146,6 +161,7 @@ export default function LandingPage() {
                 <span className="text-[#252522] font-medium">1-Click Copy</span>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </section>
@@ -171,6 +187,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Feature Bento Section */}
+      <FeatureBento />
 
       {/* Feature Bento Section - Granola Editorial Layout */}
       <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -245,6 +264,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* FAQ Section */}
+      <FAQ />
     </div>
   );
 }

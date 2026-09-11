@@ -45,6 +45,10 @@ const config: Config = {
         "glow-pulse": "glowPulse 3s ease-in-out infinite",
         "float": "float 6s ease-in-out infinite",
         "shimmer": "shimmer 2.5s linear infinite",
+        "pop-in": "popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards",
+        "slide-in-right": "slideInRight 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "fade-in-up": "fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "flip-in": "flipIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
       },
       keyframes: {
         wave: {
@@ -74,6 +78,22 @@ const config: Config = {
         shimmer: {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
+        },
+        popIn: {
+          "0%": { opacity: "0", transform: "scale(0.8)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        slideInRight: {
+          "0%": { opacity: "0", transform: "translateX(40px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        fadeInUp: {
+          "0%": { opacity: "0", transform: "translateY(20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        flipIn: {
+          "0%": { opacity: "0", transform: "perspective(400px) rotateX(20deg) translateY(20px)" },
+          "100%": { opacity: "1", transform: "perspective(400px) rotateX(0deg) translateY(0)" },
         },
       },
     },

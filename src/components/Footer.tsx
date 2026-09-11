@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, Github, Twitter, FileText } from 'lucide-react';
 import { BhashaLogo } from '@/components/BhashaLogo';
+import Mascot from '@/components/Mascot';
 
 export default function Footer() {
   const GITHUB_REPO = 'https://github.com/anuraggdubey/Bhasha';
@@ -187,26 +188,26 @@ export default function Footer() {
         </div>
 
         {/* Giant Architectural Wordmark & Brandmark */}
-        <div className="w-full pt-16 pb-6 select-none pointer-events-none flex flex-col items-center justify-center">
-          <div className="opacity-[0.20] mb-4">
+        <div className="w-full pt-16 pb-6 select-none flex flex-col items-center justify-center relative">
+          <div className="opacity-[0.20] mb-4 pointer-events-none">
             <BhashaLogo size={64} showText={false} />
           </div>
-          <svg
-            viewBox="0 0 1200 240"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-auto text-[#252522] fill-current opacity-[0.14] hover:opacity-25 transition-opacity"
-          >
-            <text
-              x="50%"
-              y="75%"
-              textAnchor="middle"
-              className="font-editorial font-black text-[210px] tracking-[-0.04em]"
-              fill="currentColor"
-            >
-              BHASHA
-            </text>
-          </svg>
+          <div className="flex font-editorial font-black text-[clamp(80px,18vw,280px)] tracking-[-0.04em] text-[#252522] opacity-[0.14] hover:opacity-25 transition-opacity leading-none pointer-events-none mt-4">
+            {'BHASHA'.split('').map((letter, idx) => (
+              <span 
+                key={idx} 
+                className={`inline-block animate-fade-in ${idx === 0 ? 'relative' : ''}`}
+                style={{ animationDelay: `${idx * 150}ms`, animationFillMode: 'both' }}
+              >
+                {letter}
+                {idx === 0 && (
+                  <span className="absolute -top-[60%] left-1/2 -translate-x-1/2 opacity-100 pointer-events-none" style={{ filter: 'none', opacity: 1 }}>
+                    <Mascot color="purple" size={90} />
+                  </span>
+                )}
+              </span>
+            ))}
+          </div>
         </div>
 
         {/* Bottom copyright bar with direct interactive links */}
