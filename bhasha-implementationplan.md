@@ -21,7 +21,7 @@ Bhasha does **not** perform sentence-to-sentence translation. Instead, it extrac
 
 ## 2. Team Structure & Contributor Ownership Matrix
 
-The project is divided across three developers with clear separation of concerns, ensuring high velocity and zero merge conflicts.
+The project is divided across two developers with clear separation of concerns, ensuring high velocity and zero merge conflicts.
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────┐
@@ -30,23 +30,19 @@ The project is divided across three developers with clear separation of concerns
 │ Contributor       │ Core Role         │ Key Deliverables                      │
 ├───────────────────┼───────────────────┼───────────────────────────────────────┤
 │ DEV 1: JOSHNA     │ Frontend Lead &   │ • Full UI/UX Design System            │
-│                   │ UI Architecture   │ • Simulated Multi-User Split View     │
+│                   │ UI Architecture   │ • Voice Studio & Team Relay Dashboards│
 │                   │                   │ • Audio Recorder & Waveform Component │
 │                   │                   │ • "Fact-Lock Proof" Visual Inspector  │
 │                   │                   │ • Frontend API Client & State Sync    │
 ├───────────────────┼───────────────────┼───────────────────────────────────────┤
-│ DEV 2: SALONI     │ Backend Lead &    │ • AssemblyAI Dictation API Pipeline   │
-│                   │ AI STT/LLM Engine │ • LLM Meaning Packet Extractor        │
-│                   │                   │ • Per-Language Context Renderer       │
-│                   │                   │ • Voice Delta Correction Processor    │
-│                   │                   │ • REST API Endpoints & WebSockets     │
-├───────────────────┼───────────────────┼───────────────────────────────────────┤
-│ DEV 3: ANURAG     │ Repo Setup, QA/   │ • Repo, Config & Shared Types         │
-│                   │ Bug Fixer, DevOps,│ • Fullstack QA Testing & Bug Fixing   │
-│                   │ Idea Refiner & Doc│ • Live Deployment & Hosting (HTTPS/WS)│
-│                   │                   │ • Idea Refinement, Pitch Deck & Demo  │
-│                   │                   │ • Test Audio Samples & Mock Fallbacks │
-│                   │                   │ • Project Documentation & Submission  │
+│ DEV 2: ANURAG     │ Full-Stack Lead,  │ • AssemblyAI Dictation API Pipeline   │
+│                   │ AI STT/LLM Engine,│ • LLM Meaning Packet Extractor (Locks)│
+│                   │ Backend, DevOps & │ • 18-Language Context Rendering Engine│
+│                   │ Documentation     │ • Voice Delta Correction Processor    │
+│                   │                   │ • WhatsApp & Email Dispatch Subsystems│
+│                   │                   │ • REST API Endpoints, SSE & Store     │
+│                   │                   │ • Repo Setup, Types, CI/CD & Deploy   │
+│                   │                   │ • Project Documentation & Presentation│
 └───────────────────┴───────────────────┴───────────────────────────────────────┘
 ```
 
@@ -67,7 +63,7 @@ The project is divided across three developers with clear separation of concerns
                                        │ Audio Blob (WAV/WebM)
                                        ▼
                      ┌───────────────────────────────────┐
-                     │   DEV 2 (Saloni): Audio Ingestion │
+                     │   DEV 2 (Anurag): Audio Ingestion │
                      │   POST /api/dictate               │
                      └─────────────────┬─────────────────┘
                                        │
@@ -81,7 +77,7 @@ The project is divided across three developers with clear separation of concerns
                                        │ Clean Raw Transcript
                                        ▼
                      ┌───────────────────────────────────┐
-                     │   DEV 2 (Saloni): Extraction LLM  │
+                     │   DEV 2 (Anurag): Extraction LLM  │
                      │   Speech ──> Meaning Packet       │
                      │   • Tag & lock facts (🔒)         │
                      │   • Validate strict JSON Schema   │
@@ -89,27 +85,26 @@ The project is divided across three developers with clear separation of concerns
                                        │ Canonical Meaning Packet
                                        ▼
                      ┌───────────────────────────────────┐
-                     │   DEV 3 (Anurag): Task Store      │
+                     │   DEV 2 (Anurag): Task Store      │
                      │   • In-Memory Canonical Store     │
                      │   • Task History & Versioning     │
                      └─────────────────┬─────────────────┘
                                        │ Broadcast Event
                                        ▼
                      ┌───────────────────────────────────┐
-                     │   DEV 2 (Saloni): Multi-Language  │
-                     │   Rendering Engine                │
-                     │   • Hindi Render (Locked Injected)│
-                     │   • Japanese Render (Locked Inj.) │
-                     │   • English Render (Locked Inj.)  │
+                     │   DEV 2 (Anurag): Multi-Language  │
+                     │   Rendering & Dispatch Engine     │
+                     │   • 18 Language Renders (Locked)  │
+                     │   • WhatsApp & Email Dispatch     │
                      └─────────────────┬─────────────────┘
                                        │ WebSocket / SSE Push
                                        ▼
                      ┌───────────────────────────────────┐
-                     │   DEV 1 (Joshna): Split Screen UI │
-                     │   • Manager View (English/Hinglish│
-                     │   • Rahul's View (Hindi)          │
-                     │   • Teammate View (Japanese)      │
+                     │   DEV 1 (Joshna): UI Dashboards   │
+                     │   • Voice Studio & Team Relay     │
+                     │   • 18-Language Member Views      │
                      │   • Side-by-Side Fact Proof View  │
+                     │   • Real-Time Dispatch Drawer     │
                      └───────────────────────────────────┘
 ```
 
@@ -279,91 +274,63 @@ When someone speaks a correction:
    - Quick Voice Correction Modal: Teammate clicks mic on their card, speaks a correction, and watches the animation ripple across all screens.
 
 5. **Frontend API Integration**:
-   - Implement `apiClient.ts` to call Dev 2's backend endpoints.
+   - Implement `apiClient.ts` to call backend endpoints.
    - Setup WebSocket or Server-Sent Events (SSE) listener for reactive updates.
 
 ---
 
-### DEV 2: SALONI (Backend Lead, AssemblyAI Integration, LLM Pipeline & APIs)
+### DEV 2: ANURAG (Full-Stack Backend Lead, AssemblyAI STT/LLM Engine, WhatsApp/Email Dispatch, DevOps & QA)
 
-**Primary Objective**: Build the intelligence engine that transcribes code-switched audio via AssemblyAI, structures it into a locked Meaning Packet, and renders it faithfully in multiple languages without fact drift.
-
-#### Detailed Deliverables for Saloni:
-1. **AssemblyAI Dictation API Integration**:
-   - Integrate AssemblyAI's Dictation API endpoint: `https://dictation.assemblyai.com/transcribe` (Universal-3.5 Pro).
-   - Pass audio binary streams with proper headers (`Authorization: <ASSEMBLYAI_API_KEY>`).
-   - Enable code-switching detection for mixed languages (Hindi + English).
-   - Configure automatic filler removal and punctuation formatting to deliver clean input text to the LLM.
-
-2. **LLM Meaning Packet Extraction Service**:
-   - Build prompt pipeline (via Claude 3.5 Sonnet, GPT-4o, or Gemini 1.5 Pro) with strict JSON Schema output.
-   - System Prompt constraints:
-     - Isolate entities (Person names, deadlines, numbers, conditions).
-     - Place all immutable values inside `locked_fields`.
-     - Flag ambiguity instead of hallucinating (e.g., if owner is unspecified, set `"owner": null`).
-   - Implement JSON schema validator (e.g., Zod or Ajv) to guarantee valid `MeaningPacket` objects.
-
-3. **Multi-Language Rendering Service**:
-   - Implement `/api/render` endpoint.
-   - Input: `MeaningPacket` + `target_languages: ["hi", "ja", "en"]`.
-   - Prompt rules for each language:
-     - Generate idiomatic, natural phrasing for the `action`.
-     - Strict rule: **Never translate locked field values semantically**. Locked numbers and times must remain identical; names must be retained or strictly phonetic.
-
-4. **Voice Correction & Delta Processor**:
-   - Implement `/api/correct` endpoint.
-   - Process correction audio through AssemblyAI $\rightarrow$ Extract delta diff $\rightarrow$ Apply patch to stored Meaning Packet $\rightarrow$ Increment version $\rightarrow$ Re-render all targets.
-
-5. **REST API Endpoints & Real-time Broadcasting**:
-   - Build lightweight, high-performance Node.js (Express/Fastify) or Python (FastAPI) server.
-   - Implement WebSocket / SSE channel for publishing task updates to Dev 1's UI.
-
----
-
-### DEV 3: ANURAG (Repo Setup, QA & Bug Fixing, Live Deployment, Idea Refiner & Documentation)
-
-**Primary Objective**: Drive foundational repository setup and scaffolding, lead product idea refinement & hackathon alignment, execute rigorous fullstack QA testing & cross-stack bug fixing, manage production live deployment (HTTPS & WebSockets), and deliver polished documentation to guarantee a bulletproof, winning submission.
+**Primary Objective**: Engineer the end-to-end intelligence engine, full-stack Next.js API architecture, AssemblyAI Universal-3.5 speech pipeline, invariant Meaning Packet fact-locking, multi-language rendering, WhatsApp/Email dispatch systems, live Vercel deployment, and rigorous QA.
 
 #### Detailed Deliverables for Anurag:
 
-1. **Repo Setup & Architecture Scaffolding**:
-   - Initialize monorepo / fullstack codebase, configure package managers, build scripts, and TypeScript configs.
-   - Configure `.env.example` with API key placeholders (`ASSEMBLYAI_API_KEY`, `LLM_API_KEY`, `PORT`, etc.).
-   - Define shared TypeScript interfaces (`MeaningPacket`, `RenderedCard`, `LockedFields`, `VoiceDelta`).
-   - Scaffold the in-memory task store skeleton and state helper functions.
+1. **AssemblyAI Dictation API Integration & Audio Processing**:
+   - Integrate AssemblyAI's Dictation API endpoint: `https://dictation.assemblyai.com/transcribe` (Universal-3.5 Pro).
+   - Pass audio binary streams with proper headers (`Authorization: <ASSEMBLYAI_API_KEY>`).
+   - Enable code-switching detection for mixed languages (Hindi + English / Hinglish).
+   - Configure automatic filler removal and punctuation formatting to deliver clean input text to the LLM.
+   - Implement fail-safe Web Speech API fallback for zero-latency local speech recognition.
 
-2. **Product Idea Refiner & Pitch Strategist**:
-   - Refine the core value proposition: rigorously define the boundary between *"Plain Translation"* vs *"Structured Meaning Packet"* so judges immediately grasp the distinction within 15 seconds.
-   - Align the demo flow directly with AssemblyAI's hackathon evaluation criteria (spotlighting the Universal-3.5 Pro Dictation API's code-switching and noise-filtering capabilities).
-   - Design the pitch narrative, slide deck, and presentation assets.
+2. **LLM Meaning Packet Extraction & Invariant Fact-Locking**:
+   - Build high-velocity LLM prompt pipeline (Groq Llama 3.3 70B, GPT-4o, Claude 3.5 Sonnet, or Gemini 1.5 Pro) with strict JSON Schema output.
+   - System Prompt constraints:
+     - Isolate critical entities: assignees/owners, deadlines, numerical constraints, and prerequisite conditions.
+     - Place all immutable values inside `locked_fields`.
+     - Flag ambiguity instead of hallucinating (e.g., if owner is unspecified, set `"owner": null`).
+   - Implement Zod runtime schema validation (`MeaningPacketSchema`) to guarantee 100% compliant data structures.
 
-3. **Fullstack QA Testing, Bug Hunting & Bug Fixing**:
-   - **Pipeline Verification**: Benchmark AssemblyAI transcription latency on rapid Hinglish audio and validate LLM schema compliance with Zod/Ajv.
-   - **Cross-Stack Bug Fixing**:
-     - Hunt and fix frontend bugs: microphone permission errors, canvas waveform visual glitches, and WebSocket state flickering.
-     - Hunt and fix backend bugs: unhandled exceptions on invalid audio streams, API timeouts, retry logic with exponential backoff, and voice delta race conditions.
-   - **Edge-Case & Stress Testing**: Validate ambiguous instructions, dialectal slang, rapid sequential voice corrections, and non-Latin script formatting.
+3. **18-Language Rendering Engine & Zero-Drift Localizer**:
+   - Implement `/api/render` endpoint supporting 18 international and Indian regional languages (English, Hindi, Japanese, Spanish, German, French, Tamil, Telugu, etc.).
+   - Prompt rules for each language:
+     - Generate idiomatic, natural phrasing for the `action`.
+     - Strict rule: **Never translate locked field values semantically**. Locked numbers and times must remain identical; names must be retained or strictly phonetic.
+     - Guarantee 0% fact drift across all recipient cards.
 
-4. **Live Deployment & DevOps**:
-   - Set up cloud hosting and continuous deployment (e.g. Vercel for frontend, Render/Railway/Fly.io for backend, or single fullstack deployment).
-   - Enforce HTTPS across production domains (critical for browser microphone permissions in modern web browsers).
-   - Configure environment variables and verify persistent WebSocket/SSE connectivity on the live URL.
+4. **Team Relay Dispatch Subsystems (WhatsApp & Email)**:
+   - Build 1-click Direct WhatsApp dispatch using official scheme `https://wa.me/<number>?text=<memo>`.
+   - Build Universal WhatsApp Group dispatch using `https://api.whatsapp.com/send?text=<memo>` for 1-click forwarding to any team chat.
+   - Build prefilled email drafting with RFC-compliant `mailto:` protocols.
+   - Implement `/api/dispatch` tracking service with real-time SSE updates and interactive Relay Drawer.
 
-5. **Project Documentation, Mock Datasets & Submission Package**:
-   - Synthesize or record 3 pristine audio test clips (`sample1_hinglish_deploy.wav`, `sample2_correction_deadline.wav`, `sample3_japanese_confirm.wav`).
-   - Create and verify mock fallback JSON files (`mock_meaning_packet.json`, `mock_rendered_cards.json`) and verify the single-click "Mock Demo Mode" fail-safe toggle.
-   - Author comprehensive, professional `README.md` with visual architecture diagrams, setup instructions, and API docs.
-   - Author official Hackathon submission writeup (pitch paragraph, problem statement, technical hurdles solved, and recorded demo walkthrough links).
-   - Lead 5 full rehearsals of the 90-second demo script with Joshna and Saloni.
+5. **Voice Correction & Delta Processor**:
+   - Implement `/api/correct` endpoint.
+   - Process correction audio through AssemblyAI $\rightarrow$ Extract delta diff $\rightarrow$ Apply patch to stored Meaning Packet $\rightarrow$ Increment version $\rightarrow$ Re-render all targets.
+
+6. **Repo Scaffolding, DevOps, CI/CD & Production Deployment**:
+   - Set up Next.js 14 App Router, TypeScript configurations, environment variables, and GitHub Actions CI workflow (`.github/workflows/ci.yml`).
+   - Deploy to Vercel with HTTPS enforcement (mandatory for browser microphone access) and Server-Sent Events support.
+   - Perform fullstack stress-testing, latency benchmarking, and edge-case handling.
+   - Author comprehensive project documentation (`README.md`, `bhasha-documentation.md`), pitch assets, and test datasets.
 
 ---
 
 ## 6. Backend API Specification
 
-All endpoints communicate using JSON over HTTP, with WebSockets for push updates.
+All endpoints communicate using JSON over HTTP, with WebSockets and Server-Sent Events for push updates.
 
 ### 6.1. Transcribe Audio (`POST /api/dictate`)
-- **Owner**: Dev 2 (Saloni)
+- **Owner**: Dev 2 (Anurag)
 - **Input**: `multipart/form-data` with `file: audio/wav` or `audio/webm`
 - **AssemblyAI Call**: Posts to `https://dictation.assemblyai.com/transcribe` with `model=universal-3.5-pro`
 - **Output**:
@@ -377,7 +344,7 @@ All endpoints communicate using JSON over HTTP, with WebSockets for push updates
 ```
 
 ### 6.2. Extract Meaning Packet (`POST /api/extract`)
-- **Owner**: Dev 2 (Saloni)
+- **Owner**: Dev 2 (Anurag)
 - **Input**:
 ```json
 {
@@ -387,7 +354,7 @@ All endpoints communicate using JSON over HTTP, with WebSockets for push updates
 - **Output**: Complete `MeaningPacket` object (as defined in Section 4.1).
 
 ### 6.3. Render Multi-Language Cards (`POST /api/render`)
-- **Owner**: Dev 2 (Saloni)
+- **Owner**: Dev 2 (Anurag)
 - **Input**:
 ```json
 {
@@ -423,15 +390,20 @@ All endpoints communicate using JSON over HTTP, with WebSockets for push updates
 ```
 
 ### 6.4. Voice Delta Correction (`POST /api/correct`)
-- **Owner**: Dev 2 (Saloni) & Dev 3 (Anurag)
+- **Owner**: Dev 2 (Anurag)
 - **Input**: `multipart/form-data` with `audio` or raw JSON with `task_id` + `correction_text`.
 - **Output**: Updated `MeaningPacket` (version incremented) + freshly updated renders for all connected clients.
 
-### 6.5. Real-Time Server-Sent Events Channel (`GET /api/events`)
+### 6.5. Team Relay Dispatch Tracking (`POST /api/dispatch` & `GET /api/dispatch`)
+- **Owner**: Dev 2 (Anurag)
+- **Input**: JSON with `teammate_id`, `channel` (`whatsapp` | `whatsapp_group` | `email`), `language`, `headline`.
+- **Output**: Recorded dispatch audit record pushed in real-time to the active Relay Drawer.
+
+### 6.6. Real-Time Server-Sent Events Channel (`GET /api/events`)
 - **Native Vercel Serverless/Edge compatible stream** using standard web `ReadableStream`.
 - **Events**:
   - `TASK_CREATED`: Emitted when new task is extracted.
-  - `TASK_MODIFIED`: Emitted when voice correction updates locked fields (triggers simultaneous instant update across Manager, Rahul, and Kenji views).
+  - `TASK_MODIFIED`: Emitted when voice correction updates locked fields.
   - `RENDERS_UPDATED`: Emitted when per-language renders refresh.
 
 ---
@@ -442,43 +414,49 @@ Unified Full-Stack Next.js (App Router) structure optimized for Vercel deploymen
 
 ```
 Bhasha/
-├── README.md                          <-- Dev 3 (Anurag)
+├── README.md                          <-- Dev 2 (Anurag) Master documentation & live links
 ├── bhasha-implementationplan.md       <-- Master engineering plan
 ├── package.json                       <-- Next.js 14 fullstack dependencies
 ├── tsconfig.json                      <-- Path aliases (@/*)
-├── tailwind.config.ts                 <-- Custom glassmorphism design tokens
+├── tailwind.config.ts                 <-- Custom glassmorphism & typography design tokens
 ├── postcss.config.mjs
 ├── next.config.mjs
-├── .env.example                       <-- Dev 3 (Anurag)
+├── .env.example                       <-- Dev 2 (Anurag) Environment configuration
 ├── .gitignore
 │
 └── src/
     ├── app/
     │   ├── layout.tsx                 <-- Dev 1 (Joshna) Root layout & typography
-    │   ├── page.tsx                   <-- Dev 1 (Joshna) Master split-screen dashboard
-    │   ├── globals.css                <-- Dev 1 (Joshna) Glassmorphism & lock glow styles
-    │   └── api/                       <-- Dev 2 (Saloni) Next.js App Router Route Handlers
+    │   ├── page.tsx                   <-- Dev 1 (Joshna) Master landing page & hero
+    │   ├── studio/page.tsx            <-- Dev 1 (Joshna) Voice Studio dictation & preview
+    │   ├── team/page.tsx              <-- Dev 1 (Joshna) Team Relay dashboard & cards
+    │   ├── globals.css                <-- Dev 1 (Joshna) Styling & 85% scale system
+    │   └── api/                       <-- Dev 2 (Anurag) Next.js App Router Route Handlers
     │       ├── dictate/route.ts       <-- AssemblyAI Dictation API client route
     │       ├── extract/route.ts       <-- LLM Meaning Packet extraction route
     │       ├── render/route.ts        <-- Multi-language context rendering route
     │       ├── correct/route.ts       <-- Voice delta correction route
-    │       ├── tasks/route.ts         <-- Dev 3 In-memory tasks endpoint
+    │       ├── dispatch/route.ts      <-- WhatsApp & Email dispatch logging route
+    │       ├── tasks/route.ts         <-- In-memory tasks endpoint
     │       └── events/route.ts        <-- Real-time SSE stream for Vercel push
     │
     ├── components/                    <-- Dev 1 (Joshna)
     │   ├── AudioRecorder.tsx          <-- Mic button & canvas waveform visualizer
     │   ├── TaskCard.tsx               <-- Localized team card with fact-lock badges
     │   ├── FactLockProof.tsx          <-- Comparative proof table (0% drift)
-    │   └── CorrectionModal.tsx        <-- Voice delta correction modal
+    │   ├── CorrectionModal.tsx        <-- Voice delta correction modal
+    │   ├── EditTeammateModal.tsx      <-- Member editor modal
+    │   └── Navbar.tsx & Footer.tsx    <-- Granola-style navigation & architectural footer
     │
-    ├── lib/
-    │   ├── assemblyai.ts              <-- Dev 2 (Saloni) AssemblyAI Universal-3.5 Pro client
-    │   ├── llm.ts                     <-- Dev 2 (Saloni) LLM Meaning Packet prompts & parser
-    │   ├── taskStore.ts               <-- Dev 3 (Anurag) Canonical in-memory task store & event hub
-    │   └── mockData.ts                <-- Dev 3 (Anurag) Pre-recorded samples & fallback JSON
+    ├── lib/                           <-- Dev 2 (Anurag)
+    │   ├── assemblyai.ts              <-- AssemblyAI Universal-3.5 Pro client
+    │   ├── llm.ts                     <-- LLM Meaning Packet prompts & 18-lang localizer
+    │   ├── dispatch.ts                <-- WhatsApp & Email URI generators
+    │   ├── taskStore.ts               <-- Canonical in-memory task store & event hub
+    │   └── mockData.ts                <-- Verified sample data & fail-safe fallbacks
     │
     └── types/
-        └── index.ts                   <-- Dev 3 (Anurag) Shared TypeScript data contracts
+        └── index.ts                   <-- Dev 2 (Anurag) Shared TypeScript data contracts
 ```
 
 ---
@@ -486,25 +464,20 @@ Bhasha/
 ## 8. Step-by-Step Implementation Timeline
 
 ### Phase 1: Foundation, Contracts & Scaffolding (Day 1)
-- **Anurag (Repo Setup & Scaffolding)**: Initialize monorepo workspace, configure TypeScript paths, setup `.env.example`, write shared types (`MeaningPacket`, `RenderedCard`). Set up in-memory task store skeleton and write initial test harness for audio payloads and mock data schemas.
-- **Saloni**: Test AssemblyAI Dictation API beta endpoint (`dictation.assemblyai.com/transcribe`) with sample code-switched audio. Draft LLM extraction prompt and verify JSON outputs.
-- **Joshna**: Create UI skeleton, configure styling system (dark mode, typography, badge tokens), design the split-screen 3-column container.
+- **Anurag (Full-Stack Backend Lead)**: Initialize repository, configure TypeScript paths, setup `.env.example`, write shared types (`MeaningPacket`, `RenderedCard`). Set up in-memory task store skeleton and write initial test harness for audio payloads and mock data schemas. Test AssemblyAI Dictation API beta endpoint (`dictation.assemblyai.com/transcribe`) with sample code-switched audio.
+- **Joshna (Frontend Lead)**: Create UI skeleton, configure styling system (Granola typography, badges, tokens), design the Voice Studio and Team Relay views.
 
-### Phase 2: Core Pipelines, UI & Idea Refinement (Day 2)
-- **Saloni**: Implement `/api/dictate` and `/api/extract` endpoints. Implement `/api/render` per-language prompt pipeline (Hindi, Japanese, English).
-- **Joshna**: Build `AudioRecorder` with canvas waveform visualization. Build `TaskCard` showing headline, natural phrasing, and locked field chips.
-- **Anurag (Testing, Mock Data & Idea Refinement)**: Test AssemblyAI transcription latency and accuracy with mixed Hinglish accents. Catch early bugs in LLM extraction schema. Prepare 3 pristine test audio clips and verify mock JSON fallbacks. Refine the core "Meaning Packet vs. Translation" pitch slides and rubric alignment.
+### Phase 2: Core Pipelines, UI & Relay Engine (Day 2)
+- **Anurag**: Implement `/api/dictate` and `/api/extract` endpoints with strict Zod schema validation. Implement `/api/render` 18-language prompt pipeline with zero fact drift guarantees. Build WhatsApp and Email dispatch URL generation logic.
+- **Joshna**: Build `AudioRecorder` with canvas waveform visualization. Build `TaskCard` with typographic avatar badges, clean memo surfaces, and 1-click dispatch buttons.
 
 ### Phase 3: Integration, Real-Time Sync & Bug Fixing (Day 3)
-- **Saloni**: Build `/api/correct` delta update engine. Setup WebSocket server to push task changes.
-- **Joshna**: Connect frontend to backend endpoints. Wire WebSocket hook for instant real-time card updates across the split screen.
-- **Joshna**: Build `FactLockProof` component highlighting identical locked attributes across all 3 language columns.
-- **Anurag (Cross-Stack Bug Fixing & Stress Testing)**: Perform end-to-end integration testing across audio recording, backend processing, and live WebSocket card refreshes. Hunt and fix bugs: browser microphone compatibility quirks, WebSocket reconnection handling, voice delta race conditions, and UI flicker.
+- **Anurag**: Build `/api/correct` delta update engine. Implement `/api/dispatch` logging and Server-Sent Events (SSE) broadcasting. Perform end-to-end integration testing across audio recording, backend processing, and live card refreshes. Hunt and fix edge-case bugs.
+- **Joshna**: Connect frontend to backend endpoints. Wire SSE listener for instant real-time card updates across Team Relay. Build `FactLockProof` component highlighting identical locked attributes across all languages.
 
 ### Phase 4: Polish, Live Deployment & Demo Dry Run (Day 4)
-- **Joshna**: Add micro-animations (card entry transitions, lock badge glow, pulsing update indicator).
-- **Saloni**: Add error boundaries and fallback handling for LLM rate limits or audio network timeouts.
-- **Anurag (DevOps, Documentation & Demo Prep)**: Execute production live deployment (HTTPS for mic access, persistent WebSockets). Author comprehensive `README.md`, API documentation, and official hackathon submission writeup. Validate the single-click "Mock Demo Mode" fail-safe and lead 5 full rehearsals of the 90-second demo script with Joshna and Saloni.
+- **Joshna**: Fine-tune UI layout scaling (85% zoom), micro-animations, lock badge glow, and responsive cards.
+- **Anurag**: Execute production Vercel live deployment ([https://bhashaz.vercel.app/](https://bhashaz.vercel.app/)), configure HTTPS, set up GitHub Actions CI pipeline, author comprehensive `README.md`, and lead rehearsals of the 90-second demo script with Joshna.
 
 ---
 
@@ -516,16 +489,16 @@ To impress the judges, the live demo must be smooth, punchy, and make the "fact-
 | :--- | :--- | :--- | :--- |
 | **00:00 - 00:20** | **Speaker 1 (Manager)**:<br>Presses mic and speaks Hinglish: *"Kal Rahul deployment kare, but only after tests pass — deadline 4 PM."* | Audio waveform moves live.<br>AssemblyAI transcribes Hinglish with zero filler words. | *"We don't type or force people to speak pure English. AssemblyAI handles natural code-switching."* |
 | **00:20 - 00:45** | **System Extraction**: | Instant card animation.<br>Meaning Packet displays: **Owner: Rahul (🔒)**, **Deadline: Tomorrow 4 PM (🔒)**, **Condition: Tests pass (🔒)**. | *"Notice this isn't a translation. It's a Meaning Packet with locked facts."* |
-| **00:45 - 01:10** | **Show Split View**: | Rahul's column shows Hindi.<br>Kenji's column shows Japanese.<br>Side-by-side Proof View highlights identical locked values. | *"Rahul reads Hindi, Kenji reads Japanese. Both see the exact same 4 PM and test condition."* |
-| **01:10 - 01:30** | **Voice Correction**: | Rahul clicks mic on his Hindi card: *"Actually push it to 5 PM."*<br>All 3 columns flash and update to **5 PM** simultaneously. | *"One voice delta updates the shared packet. No re-translation telephone game. Zero drift."* |
+| **00:45 - 01:10** | **Team Relay & Multi-Language**: | Rahul's view shows Hindi.<br>Kenji's view shows Japanese.<br>Side-by-side Proof View highlights identical locked values. | *"Rahul reads Hindi, Kenji reads Japanese. Both see the exact same 4 PM and test condition."* |
+| **01:10 - 01:30** | **Voice Correction & 1-Click Dispatch**: | Speaks voice correction: *"Actually push it to 5 PM."*<br>All cards flash and update to **5 PM**.<br>Clicks **WhatsApp** to dispatch prefilled localized memo. | *"One voice delta updates the shared packet with 0% drift, and dispatches instantly to WhatsApp or Email."* |
 
 ---
 
 ## 10. Fail-Safe Mechanisms (Hackathon Guardrails)
 
 1. **API Rate Limiting / Offline Mode**:
-   - Dev 3's mock datasets can be activated with a single UI toggle (`USE_MOCK_DATA=true` or a demo toggle switch in the UI header).
-   - If AssemblyAI or LLM takes $>3$ seconds, UI provides instant preview using cached sample cards.
+   - Anurag's mock datasets can be activated with a single UI toggle (`NEXT_PUBLIC_USE_MOCK_DATA=true` or demo buttons in the UI).
+   - If external APIs take $>3$ seconds, UI provides instant preview using verified cached sample cards.
 2. **Audio Input Fallback**:
    - If browser microphone permissions fail on the demo laptop, a "Quick Sample" dropdown allows clicking "Hinglish Deployment" to inject the pre-recorded audio file directly.
 3. **Strict Validation**:

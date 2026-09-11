@@ -2,11 +2,16 @@
 ### *One Meaning, Every Language*
 **Voice-First Task Handoff & Orchestration for Multilingual Teams**
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-bhashaz.vercel.app-10b981?style=for-the-badge&logo=vercel)](https://bhashaz.vercel.app/)
 [![Next.js](https://img.shields.io/badge/Next.js-14_App_Router-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![STT](https://img.shields.io/badge/AssemblyAI-Universal--3.5_Pro-teal?style=flat-square)](https://www.assemblyai.com/)
 [![Deploy with Vercel](https://img.shields.io/badge/Vercel-Production_Ready-000000?style=flat-square&logo=vercel)](https://vercel.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+
+> 🌐 **Live Production Link**: **[https://bhashaz.vercel.app/](https://bhashaz.vercel.app/)**  
+> 📖 **Architecture Documentation**: [`bhasha-documentation.md`](./bhasha-documentation.md)  
+> 📋 **Engineering Plan**: [`bhasha-implementationplan.md`](./bhasha-implementationplan.md)
 
 ---
 
@@ -103,6 +108,43 @@ Modern global and distributed engineering teams lose precision at the handoff mo
    - Any team member can speak a correction (*"Actually make that 5 PM, integration tests are taking longer"*). The engine isolates the delta, updates the single canonical packet, and cascades the update to all views simultaneously.
 5. **Fact-Lock Proof Inspector**:
    - A side-by-side comparative verification table embedded in the interface that displays canonical locked values alongside localized outputs, mathematically proving zero fact drift.
+
+---
+
+## 🔄 How Zero-Drift Translation Works
+
+Bhasha eliminates the "telephone game" of traditional chained translation by decoupling **invariant facts** from **cultural phrasing**:
+
+1. **Voice Dictation & Code-Switching Ingestion**:
+   - Audio is captured and streamed to **AssemblyAI Universal-3.5 Pro** via `/api/dictate` (with browser Web Speech API as fallback).
+   - Native multilingual code-switching transcribes mixed speech (e.g., *Hinglish*, *Spanglish*) without manual language selection, automatically stripping filler sounds (*"uh"*, *"umm"*).
+2. **Invariant Fact-Locking (Meaning Packet Extraction)**:
+   - High-velocity LLMs (Groq Llama 3.3 70B / OpenAI GPT-4o) parse the transcript into a language-independent JSON data structure: the **Meaning Packet**.
+   - Critical entities (`owner`, `deadline`, `prerequisites`, `numerical constraints`) are extracted into `locked_fields` with a fact-lock verification contract.
+3. **Multilingual Rendering (18 Supported Languages)**:
+   - Rather than translating words sequentially, `/api/render` generates culturally natural phrasing directly from the canonical packet into each recipient's language.
+   - Locked entities are pinned verbatim, guaranteeing **0% fact drift** (e.g., "4:00 PM IST" and "after tests pass" remain identical across English, Hindi, Japanese, Spanish, etc.).
+4. **Voice Delta Correction Loop**:
+   - When any teammate speaks a correction (*"Actually make that 5 PM"*), `/api/correct` extracts only the delta change, mutates the central packet (e.g., `v1.0` $\rightarrow$ `v2.0`), and broadcasts updates to all cards simultaneously via Server-Sent Events (SSE).
+
+---
+
+## 📲 How Team Relay Dispatch Works (WhatsApp & Email)
+
+In **Team Relay**, verified instructions are dispatched directly to teammates and squad channels in their native languages:
+
+1. **Direct WhatsApp Dispatch (Individual Teammates)**:
+   - Clicking **"Dispatch WhatsApp"** opens the verified contact via `https://wa.me/<phone_number>?text=<encoded_task_memo>`.
+   - Generates a clean localized memo with recipient greeting, translated action body, and 🔒 locked verification markers.
+2. **Universal WhatsApp Group Dispatch**:
+   - For shared channels or squad handoffs (e.g., *"Frontend Squad"*, *"DevOps Core"*), Bhasha triggers `https://api.whatsapp.com/send?text=<encoded_task_memo>`.
+   - Opens the WhatsApp group chat selector, allowing instant 1-click dispatch to any existing channel without requiring complex bot configurations.
+3. **Pre-Filled Email Draft Dispatch**:
+   - Clicking **"Send Email"** generates a formatted `mailto:<email>?subject=<headline>&body=<memo>`.
+   - Instantly opens the sender's default email client (Gmail, Outlook, Apple Mail) with structured briefing notes ready to send.
+4. **Real-Time Audit Trail & Delivery History**:
+   - Every dispatch is logged through `/api/dispatch`.
+   - The slide-out **Relay Drawer** tracks delivery timestamps, channel badges, recipient names, and translated headlines in real-time.
 
 ---
 

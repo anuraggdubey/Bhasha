@@ -1,6 +1,6 @@
 // ==============================================================================
 // Bhasha — Core Type Definitions & Data Contracts
-// Single Source of Truth for Dev 1 (Joshna), Dev 2 (Saloni), and Dev 3 (Anurag)
+// Single Source of Truth for Dev 1 (Joshna) and Dev 2 (Anurag)
 // ==============================================================================
 
 export type TaskStatus =

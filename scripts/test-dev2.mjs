@@ -20,7 +20,7 @@ async function logStep(title, fn) {
 }
 
 async function runTests() {
-  console.log(`🚀 Starting Dev 2 (Saloni) Backend Intelligence Test Suite`);
+  console.log(`🚀 Starting Dev 2 (Anurag) Backend Intelligence Test Suite`);
   console.log(`Target: ${BASE_URL}`);
 
   let createdTaskId = null;
