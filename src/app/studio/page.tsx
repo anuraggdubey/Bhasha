@@ -130,11 +130,11 @@ export default function StudioPage() {
       {/* Delicate Ambient Grid */}
       <div className="absolute inset-0 ambient-grid pointer-events-none z-0 opacity-40" />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Toast Notification */}
         {statusMessage && (
           <div className="fixed top-20 right-6 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#252522] text-[#FFFCFA] text-xs font-medium shadow-lg">
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-[#252522] text-[#FFFCFA] text-xs font-medium shadow-lg">
               <Check className="w-3.5 h-3.5 text-[#D1E043]" />
               <span>{statusMessage}</span>
             </div>
@@ -142,12 +142,12 @@ export default function StudioPage() {
         )}
 
         {/* Studio Header - Granola Editorial Style */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-black/[0.08]">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-black/[0.08]">
           <div>
-            <h1 className="font-editorial text-4xl sm:text-5xl font-normal tracking-tight text-[#252522] mb-2">
+            <h1 className="font-editorial text-3xl sm:text-4xl font-normal tracking-tight text-[#252522] mb-1.5">
               Voice Studio
             </h1>
-            <p className="text-base text-[#6B6B65] font-sans">
+            <p className="text-sm text-[#6B6B65] font-sans">
               Speak spontaneous notes. Instant multilingual translation into 18 languages.
             </p>
           </div>
@@ -156,11 +156,11 @@ export default function StudioPage() {
             <button
               onClick={handleDispatchToTeam}
               disabled={isProcessing}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#252522] hover:bg-[#383834] text-[#FFFCFA] font-medium text-xs shadow-xs transition-all hover:scale-[1.02] disabled:opacity-50 active:scale-[0.98]"
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#252522] hover:bg-[#383834] text-[#FFFCFA] font-medium text-xs shadow-xs transition-all hover:scale-[1.02] disabled:opacity-50 active:scale-[0.98]"
             >
-              <CheckCircle2 className="w-4 h-4 text-[#D1E043]" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#D1E043]" />
               <span>Send to Team Relay</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3 h-3" />
             </button>
           </div>
         </div>
@@ -172,18 +172,18 @@ export default function StudioPage() {
         />
 
         {/* Two-Column Output Grid: Transcribed Input vs Translated Output */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Left Card: Spoken Input Note */}
-          <div className="editorial-card p-7 bg-white flex flex-col justify-between min-h-[320px]">
+          <div className="editorial-card p-5 sm:p-6 bg-white flex flex-col justify-between min-h-[260px]">
             <div>
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-black/[0.06]">
+              <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-black/[0.06]">
                 <div className="flex items-center gap-2 text-xs font-semibold text-[#252522]">
-                  <FileText className="w-4 h-4 text-[#252522]" />
+                  <FileText className="w-3.5 h-3.5 text-[#252522]" />
                   <span>Original Spoken Voice Note</span>
                 </div>
                 <button
                   onClick={() => copyToClipboard(activePacket.raw_transcript, 'transcript')}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F7F7F2] hover:bg-[#EFEFEA] text-[#252522] text-xs font-medium transition-all"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F7F7F2] hover:bg-[#EFEFEA] text-[#252522] text-xs font-medium transition-all"
                   title="Copy Transcript"
                 >
                   {copiedSection === 'transcript' ? (
@@ -200,14 +200,14 @@ export default function StudioPage() {
                 </button>
               </div>
 
-              <div className="py-2">
-                <p className="font-editorial text-2xl font-normal leading-relaxed text-[#252522]">
+              <div className="py-1">
+                <p className="font-editorial text-xl sm:text-[22px] font-normal leading-relaxed text-[#252522]">
                   &ldquo;{activePacket.raw_transcript}&rdquo;
                 </p>
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-black/[0.06] flex items-center justify-between text-xs text-[#7A7A72]">
+            <div className="mt-5 pt-3.5 border-t border-black/[0.06] flex items-center justify-between text-xs text-[#7A7A72]">
               <span>Spoken Input</span>
               <span className="text-[#5B6F00] font-medium flex items-center gap-1">
                 <Check className="w-3.5 h-3.5" /> Speech Transcribed
@@ -216,14 +216,14 @@ export default function StudioPage() {
           </div>
 
           {/* Right Card: Rendered Output with In-Card Language Dropdown */}
-          <div className="editorial-card p-7 bg-white flex flex-col justify-between min-h-[320px]">
+          <div className="editorial-card p-5 sm:p-6 bg-white flex flex-col justify-between min-h-[260px]">
             <div>
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-black/[0.06]">
-                <div className="flex items-center gap-2.5">
+              <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-black/[0.06]">
+                <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-[#252522]">Rendered Output</span>
 
                   {/* Language Selector Dropdown inside Rendered Output header */}
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F7F7F2] border border-black/[0.08]">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F7F7F2] border border-black/[0.08]">
                     <span className="text-xs">{currentLangMeta.flag}</span>
                     <select
                       value={targetLanguage}
@@ -246,7 +246,7 @@ export default function StudioPage() {
                       'translation'
                     )
                   }
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F7F7F2] hover:bg-[#EFEFEA] text-[#252522] text-xs font-medium transition-all"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F7F7F2] hover:bg-[#EFEFEA] text-[#252522] text-xs font-medium transition-all"
                   title="Copy Output"
                 >
                   {copiedSection === 'translation' ? (
@@ -263,21 +263,21 @@ export default function StudioPage() {
                 </button>
               </div>
 
-              <div className="py-2">
+              <div className="py-1">
                 {isProcessing ? (
-                  <div className="flex items-center gap-2 text-sm text-[#7A7A72] py-4">
-                    <div className="w-4 h-4 rounded-full border-2 border-black/[0.2] border-t-[#252522] animate-spin" />
+                  <div className="flex items-center gap-2 text-sm text-[#7A7A72] py-3">
+                    <div className="w-3.5 h-3.5 rounded-full border-2 border-black/[0.2] border-t-[#252522] animate-spin" />
                     <span>Translating into {currentLangMeta.name}...</span>
                   </div>
                 ) : (
-                  <p className="font-editorial text-2xl font-normal leading-relaxed text-[#252522]">
+                  <p className="font-editorial text-xl sm:text-[22px] font-normal leading-relaxed text-[#252522]">
                     {translatedCard?.rendered_body || activePacket.raw_transcript}
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-black/[0.06] flex items-center justify-between text-xs text-[#7A7A72]">
+            <div className="mt-5 pt-3.5 border-t border-black/[0.06] flex items-center justify-between text-xs text-[#7A7A72]">
               <span>Target: {currentLangMeta.nativeName}</span>
               <span className="text-[#5B6F00] font-medium flex items-center gap-1">
                 <Globe className="w-3.5 h-3.5 text-[#5B6F00]" /> Live Translation

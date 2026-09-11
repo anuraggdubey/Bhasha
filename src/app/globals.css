@@ -20,6 +20,10 @@
   --accent-lime: #D1E043;
 }
 
+html {
+  zoom: 0.85;
+}
+
 body {
   color: #252522;
   background-color: #FFFCFA;

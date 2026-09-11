@@ -1,0 +1,37 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-validate:
+    name: Build & Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: TypeScript Type Check
+        run: npm run type-check
+
+      - name: Next.js Production Build
+        run: npm run build
+        env:
+          ASSEMBLYAI_API_KEY: ${{ secrets.ASSEMBLYAI_API_KEY || 'ci_build_key' }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY || 'ci_build_key' }}
+          NEXT_PUBLIC_USE_MOCK_DATA: false
+          NEXT_PUBLIC_APP_URL: https://bhasha.vercel.app

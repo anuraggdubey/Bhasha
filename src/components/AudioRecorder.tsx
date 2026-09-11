@@ -266,13 +266,13 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   };
 
   return (
-    <div className="w-full editorial-card p-6 border border-black/[0.08] relative overflow-hidden bg-white shadow-sm">
+    <div className="w-full editorial-card p-5 border border-black/[0.08] relative overflow-hidden bg-white shadow-xs">
       {/* Input Mode Switcher Header */}
-      <div className="flex items-center justify-between pb-4 mb-5 border-b border-black/[0.06]">
+      <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-black/[0.06]">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setInputMode('voice')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
               inputMode === 'voice'
                 ? 'bg-[#252522] text-[#FFFCFA]'
                 : 'text-[#6B6B65] hover:text-[#252522] bg-[#F7F7F2]'
@@ -284,7 +284,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
           <button
             onClick={() => setInputMode('text')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
               inputMode === 'text'
                 ? 'bg-[#252522] text-[#FFFCFA]'
                 : 'text-[#6B6B65] hover:text-[#252522] bg-[#F7F7F2]'
@@ -302,13 +302,13 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       </div>
 
       {inputMode === 'voice' ? (
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-5 w-full lg:w-auto">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-5">
+          <div className="flex items-center gap-4 w-full lg:w-auto">
             {/* Record Button */}
             <button
               onClick={isRecording ? stopRecording : startRecording}
               disabled={isProcessing}
-              className={`relative flex-shrink-0 flex items-center justify-center w-15 h-15 rounded-full transition-all duration-200 shadow-sm ${
+              className={`relative flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-full transition-all duration-200 shadow-xs ${
                 isRecording
                   ? 'bg-[#ED5A31] text-white coral-glow'
                   : 'bg-[#252522] hover:bg-[#3A3A34] text-white hover:scale-105 active:scale-95'
@@ -316,15 +316,15 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
               title={isRecording ? 'Click to stop' : 'Click to start speaking'}
             >
               {isRecording ? (
-                <Square className="w-5 h-5 text-white" />
+                <Square className="w-4 h-4 text-white" />
               ) : (
-                <Mic className="w-6 h-6 text-[#FFFCFA]" />
+                <Mic className="w-5 h-5 text-[#FFFCFA]" />
               )}
             </button>
 
             <div className="flex-1">
-              <div className="flex items-center gap-2.5">
-                <h3 className="font-editorial text-xl font-normal text-[#252522]">
+              <div className="flex items-center gap-2">
+                <h3 className="font-editorial text-lg font-normal text-[#252522]">
                   {isRecording
                     ? 'Listening...'
                     : isProcessing
@@ -332,8 +332,8 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
                     : 'Click microphone to speak'}
                 </h3>
                 {isRecording && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-[#ED5A31] font-semibold bg-[#FBEBE8] px-2 py-0.5 rounded-full border border-[#ED5A31]/20">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-mono text-[#ED5A31] font-semibold bg-[#FBEBE8] px-2 py-0.5 rounded-full border border-[#ED5A31]/20">
                       {recordSeconds}s
                     </span>
                   </div>
