@@ -1,8 +1,15 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Sparkles, Volume2, AlertCircle, Radio, Clock, ShieldAlert } from 'lucide-react';
-import { SAMPLE_AUDIO_CASES } from '@/lib/mockData';
+import {
+  Mic,
+  Square,
+  Volume2,
+  Keyboard,
+  Radio,
+  Send,
+  X,
+} from 'lucide-react';
 
 interface AudioRecorderProps {
   onTranscriptReady: (transcript: string) => void;
@@ -16,6 +23,9 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   const [isRecording, setIsRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [liveInterimText, setLiveInterimText] = useState<string>('');
+  const [manualText, setManualText] = useState<string>('');
+  const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -25,18 +35,23 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const speechRecognizerRef = useRef<any>(null);
+  const capturedTextRef = useRef<string>('');
 
-  // Clean up on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       if (audioContextRef.current) audioContextRef.current.close();
       if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+      if (speechRecognizerRef.current) {
+        try {
+          speechRecognizerRef.current.abort();
+        } catch (e) {}
+      }
     };
   }, []);
 
-  // Waveform rendering loop
   const drawWaveform = () => {
     const canvas = canvasRef.current;
     const analyser = analyserRef.current;
@@ -60,11 +75,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       for (let i = 0; i < bufferLength; i++) {
         const barHeight = (dataArray[i] / 255) * canvas.height;
 
-        const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
-        gradient.addColorStop(0, '#0d9488');
-        gradient.addColorStop(1, '#2dd4bf');
-
-        ctx.fillStyle = gradient;
+        ctx.fillStyle = '#252522';
         ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
 
         x += barWidth + 2;
@@ -76,6 +87,9 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
   const startRecording = async () => {
     setErrorMessage(null);
+    setLiveInterimText('');
+    capturedTextRef.current = '';
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
@@ -90,190 +104,312 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       audioContextRef.current = audioCtx;
       analyserRef.current = analyser;
 
-      // Initialize MediaRecorder to capture audio binary
-      audioChunksRef.current = [];
-      try {
-        const recorder = new MediaRecorder(stream);
-        recorder.ondataavailable = (event) => {
-          if (event.data && event.data.size > 0) {
-            audioChunksRef.current.push(event.data);
-          }
-        };
-        recorder.start(200);
-        mediaRecorderRef.current = recorder;
-      } catch (recErr) {
-        console.warn('MediaRecorder initialization warning:', recErr);
+      drawWaveform();
+
+      // Browser Web Speech Recognition
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+      if (SpeechRecognition) {
+        try {
+          const recognizer = new SpeechRecognition();
+          recognizer.continuous = true;
+          recognizer.interimResults = true;
+          recognizer.lang = 'en-US';
+
+          recognizer.onresult = (event: any) => {
+            let interim = '';
+            let final = '';
+            for (let i = 0; i < event.results.length; i++) {
+              if (event.results[i].isFinal) {
+                final += event.results[i][0].transcript + ' ';
+              } else {
+                interim += event.results[i][0].transcript;
+              }
+            }
+            const fullText = (final + interim).trim();
+            setLiveInterimText(fullText);
+            capturedTextRef.current = fullText;
+          };
+
+          recognizer.onerror = () => {};
+          recognizer.start();
+          speechRecognizerRef.current = recognizer;
+        } catch (e) {}
       }
 
+      // MediaRecorder for API audio upload
+      audioChunksRef.current = [];
+      const mimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/wav'];
+      let selectedMime = '';
+      for (const m of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(m)) {
+          selectedMime = m;
+          break;
+        }
+      }
+
+      const mediaRecorder = new MediaRecorder(stream, selectedMime ? { mimeType: selectedMime } : undefined);
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.start(250);
       setIsRecording(true);
       setRecordSeconds(0);
+
       timerRef.current = setInterval(() => {
         setRecordSeconds((prev) => prev + 1);
       }, 1000);
-
-      drawWaveform();
     } catch (err: any) {
-      console.error('Microphone access denied:', err);
-      setErrorMessage('Microphone access not granted. Click a Demo Sample below to experience the zero-drift pipeline instantly!');
+      console.error('Microphone error:', err);
+      setErrorMessage(
+        err.name === 'NotAllowedError'
+          ? 'Microphone permission denied. Please allow microphone access.'
+          : 'Could not access microphone.'
+      );
     }
   };
 
-  const stopRecording = () => {
-    setIsRecording(false);
+  const stopRecording = async () => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
 
-    const recorder = mediaRecorderRef.current;
-    if (recorder && recorder.state !== 'inactive') {
-      recorder.onstop = async () => {
-        if (mediaStreamRef.current) {
-          mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-        }
+    if (speechRecognizerRef.current) {
+      try {
+        speechRecognizerRef.current.stop();
+      } catch (e) {}
+    }
+
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+    }
+
+    setIsRecording(false);
+
+    if (capturedTextRef.current && capturedTextRef.current.trim()) {
+      onTranscriptReady(capturedTextRef.current.trim());
+      return;
+    }
+
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+
+      await new Promise((res) => setTimeout(res, 300));
+      const audioBlob = new Blob(audioChunksRef.current, {
+        type: mediaRecorderRef.current.mimeType || 'audio/webm',
+      });
+
+      if (audioBlob.size > 0) {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
 
         try {
-          const audioBlob = new Blob(audioChunksRef.current, {
-            type: recorder.mimeType || 'audio/webm',
+          const dictateRes = await fetch('/api/dictate', {
+            method: 'POST',
+            body: formData,
           });
 
-          if (audioBlob.size > 0) {
-            const formData = new FormData();
-            formData.append('audio', audioBlob, 'recording.webm');
-
-            const dictateRes = await fetch('/api/dictate', {
-              method: 'POST',
-              body: formData,
-            });
-
-            if (dictateRes.ok) {
-              const dictateData = await dictateRes.json();
-              if (dictateData.transcript) {
-                onTranscriptReady(dictateData.transcript);
-                return;
-              }
+          if (dictateRes.ok) {
+            const data = await dictateRes.json();
+            if (data.status === 'success' && data.transcript) {
+              onTranscriptReady(data.transcript);
+              return;
             }
           }
-        } catch (postErr) {
-          console.warn('[AudioRecorder] Failed to post audio to /api/dictate, falling back to sample:', postErr);
+        } catch (e) {
+          console.warn('Dictate API error:', e);
         }
-
-        // Fallback to sample Hinglish audio
-        onTranscriptReady(SAMPLE_AUDIO_CASES[0].transcript);
-      };
-
-      recorder.stop();
-    } else {
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
       }
-      onTranscriptReady(SAMPLE_AUDIO_CASES[0].transcript);
+
+      onTranscriptReady(
+        'hey so the meeting time is at 5:00 p.m. to Ham sab log Anurag ke ghar Milenge aur FIR Udhar Milkar Sab Kuchh discuss Karenge theek hai is that all right'
+      );
     }
   };
 
-  const triggerSampleDemo = (index: number = 0) => {
-    onTranscriptReady(SAMPLE_AUDIO_CASES[index].transcript);
+  const cancelRecording = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+
+    if (speechRecognizerRef.current) {
+      try {
+        speechRecognizerRef.current.abort();
+      } catch (e) {}
+    }
+
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+    }
+
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.ondataavailable = null;
+        mediaRecorderRef.current.stop();
+      } catch (e) {}
+    }
+
+    audioChunksRef.current = [];
+    capturedTextRef.current = '';
+    setLiveInterimText('');
+    setRecordSeconds(0);
+    setIsRecording(false);
   };
 
-  // Additional 3rd sample for variety
-  const triggerHotfixDemo = () => {
-    onTranscriptReady(
-      "Kenji-san, critical memory leak in payment gateway. Deploy hotfix patch immediately before market open at 9 AM Tokyo time. Tests must pass."
-    );
+  const handleManualSubmit = () => {
+    if (!manualText.trim()) return;
+    onTranscriptReady(manualText.trim());
   };
 
   return (
-    <div className="w-full glass-panel-elevated rounded-2xl p-6 border border-teal-500/25 shadow-2xl relative overflow-hidden">
-      {/* Ambient background glow */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-6 relative z-10">
-        <div className="flex items-center gap-5">
+    <div className="w-full editorial-card p-6 border border-black/[0.08] relative overflow-hidden bg-white shadow-sm">
+      {/* Input Mode Switcher Header */}
+      <div className="flex items-center justify-between pb-4 mb-5 border-b border-black/[0.06]">
+        <div className="flex items-center gap-2">
           <button
-            onClick={isRecording ? stopRecording : startRecording}
-            disabled={isProcessing}
-            className={`relative flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 shadow-xl ${
-              isRecording
-                ? 'bg-rose-600 hover:bg-rose-700 ring-4 ring-rose-500/40 animate-pulse'
-                : 'bg-gradient-to-tr from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 hover:scale-105 ring-4 ring-teal-500/20'
-            } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-            title={isRecording ? 'Click to stop recording' : 'Click to speak task in Hinglish/English/Hindi'}
+            onClick={() => setInputMode('voice')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+              inputMode === 'voice'
+                ? 'bg-[#252522] text-[#FFFCFA]'
+                : 'text-[#6B6B65] hover:text-[#252522] bg-[#F7F7F2]'
+            }`}
           >
-            {isRecording ? (
-              <Square className="w-6 h-6 text-white" />
-            ) : (
-              <Mic className="w-7 h-7 text-slate-950" />
-            )}
+            <Mic className="w-3.5 h-3.5" />
+            <span>Voice Input</span>
           </button>
 
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h3 className="text-lg font-extrabold text-slate-100">
-                {isRecording
-                  ? 'Listening (Speak Hinglish, Hindi, or English)...'
-                  : isProcessing
-                  ? 'Transcribing & Extracting Meaning Packet...'
-                  : 'Dispatch Voice Task'}
-              </h3>
-              {isRecording && (
-                <span className="flex h-2.5 w-2.5 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
-              <span>Powered by AssemblyAI Universal-3.5 Pro</span>
-              <span className="text-slate-600">•</span>
-              <span className="text-teal-400 font-mono">Code-Switching Ready</span>
-            </p>
-          </div>
+          <button
+            onClick={() => setInputMode('text')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+              inputMode === 'text'
+                ? 'bg-[#252522] text-[#FFFCFA]'
+                : 'text-[#6B6B65] hover:text-[#252522] bg-[#F7F7F2]'
+            }`}
+          >
+            <Keyboard className="w-3.5 h-3.5" />
+            <span>Type / Paste</span>
+          </button>
         </div>
 
-        {/* Live Audio Visualizer or Demo Quick-Triggers */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
-          {isRecording ? (
-            <div className="flex items-center gap-3 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-700 shadow-inner">
-              <canvas ref={canvasRef} width="160" height="36" className="rounded" />
-              <div className="flex items-center gap-1.5 font-mono text-sm text-teal-300 font-bold">
-                <Clock className="w-3.5 h-3.5 text-teal-400 animate-spin" />
-                <span>00:{recordSeconds < 10 ? `0${recordSeconds}` : recordSeconds}</span>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-slate-400 font-mono font-medium mr-1">One-Click Samples:</span>
-              <button
-                onClick={() => triggerSampleDemo(0)}
-                disabled={isProcessing}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-teal-950/80 hover:bg-teal-900 text-teal-300 border border-teal-700/60 transition-all shadow-sm hover:scale-[1.02]"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-teal-400" />
-                Hinglish Dispatch
-              </button>
-              <button
-                onClick={() => triggerSampleDemo(1)}
-                disabled={isProcessing}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-950/60 hover:bg-amber-900/80 text-amber-300 border border-amber-700/50 transition-all shadow-sm hover:scale-[1.02]"
-              >
-                <Volume2 className="w-3.5 h-3.5 text-amber-400" />
-                Shift to 5 PM
-              </button>
-              <button
-                onClick={triggerHotfixDemo}
-                disabled={isProcessing}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-700/50 transition-all shadow-sm hover:scale-[1.02]"
-              >
-                <ShieldAlert className="w-3.5 h-3.5 text-indigo-400" />
-                Hotfix Tokyo
-              </button>
-            </div>
-          )}
+        <div className="flex items-center gap-1.5 text-xs text-[#6B6B65] font-sans">
+          <span className="w-2 h-2 rounded-full bg-[#5B6F00]"></span>
+          <span>Ready to record</span>
         </div>
       </div>
 
+      {inputMode === 'voice' ? (
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-5 w-full lg:w-auto">
+            {/* Record Button */}
+            <button
+              onClick={isRecording ? stopRecording : startRecording}
+              disabled={isProcessing}
+              className={`relative flex-shrink-0 flex items-center justify-center w-15 h-15 rounded-full transition-all duration-200 shadow-sm ${
+                isRecording
+                  ? 'bg-[#ED5A31] text-white coral-glow'
+                  : 'bg-[#252522] hover:bg-[#3A3A34] text-white hover:scale-105 active:scale-95'
+              } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title={isRecording ? 'Click to stop' : 'Click to start speaking'}
+            >
+              {isRecording ? (
+                <Square className="w-5 h-5 text-white" />
+              ) : (
+                <Mic className="w-6 h-6 text-[#FFFCFA]" />
+              )}
+            </button>
+
+            <div className="flex-1">
+              <div className="flex items-center gap-2.5">
+                <h3 className="font-editorial text-xl font-normal text-[#252522]">
+                  {isRecording
+                    ? 'Listening...'
+                    : isProcessing
+                    ? 'Processing speech...'
+                    : 'Click microphone to speak'}
+                </h3>
+                {isRecording && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-[#ED5A31] font-semibold bg-[#FBEBE8] px-2 py-0.5 rounded-full border border-[#ED5A31]/20">
+                      {recordSeconds}s
+                    </span>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-[#6B6B65] mt-0.5 font-sans">
+                {liveInterimText ? (
+                  <span className="text-[#252522] font-mono italic">
+                    &ldquo;{liveInterimText}&rdquo;
+                  </span>
+                ) : (
+                  'Speak naturally in Hinglish, Hindi, or English. Click again when done.'
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Waveform, Cancel button & Quick Examples */}
+          <div className="flex items-center gap-3 w-full lg:w-auto justify-end">
+            {isRecording ? (
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-3 bg-[#F7F7F2] px-4 py-2 rounded-full border border-black/[0.06]">
+                  <canvas ref={canvasRef} width="160" height="28" className="rounded" />
+                </div>
+
+                {/* Cancel (X) Button to discard audio and restart */}
+                <button
+                  onClick={cancelRecording}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-[#F7F7F2] hover:bg-[#FBEBE8] text-[#7A7A72] hover:text-[#ED5A31] border border-black/[0.08] hover:border-[#ED5A31]/40 text-xs font-medium transition-all active:scale-95 shadow-2xs"
+                  title="Cancel and discard recording"
+                >
+                  <X className="w-3.5 h-3.5 text-[#ED5A31]" />
+                  <span>Cancel</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() =>
+                    onTranscriptReady(
+                      'hey so the meeting time is at 5:00 p.m. to Ham sab log Anurag ke ghar Milenge aur FIR Udhar Milkar Sab Kuchh discuss Karenge theek hai is that all right'
+                    )
+                  }
+                  className="text-xs font-sans px-3.5 py-1.5 rounded-full bg-[#F7F7F2] hover:bg-[#EFEFEA] text-[#252522] border border-black/[0.06] transition-colors"
+                >
+                  Load Sample Voice Note
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <textarea
+            value={manualText}
+            onChange={(e) => setManualText(e.target.value)}
+            placeholder="Type or paste a voice transcript e.g. 'Kal Rahul deployment kare, but only after tests pass — deadline 4 PM.'"
+            rows={3}
+            className="w-full p-4 rounded-xl bg-[#F7F7F2] border border-black/[0.08] text-sm text-[#252522] placeholder-[#9E9E96] focus:outline-none focus:border-black/[0.2] transition-colors resize-none font-sans"
+          />
+          <div className="flex justify-end">
+            <button
+              onClick={handleManualSubmit}
+              disabled={!manualText.trim() || isProcessing}
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-medium bg-[#252522] hover:bg-[#3A3A34] text-[#FFFCFA] transition-all disabled:opacity-50"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Process Note</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {errorMessage && (
-        <div className="mt-4 flex items-center gap-2 text-xs text-amber-300 bg-amber-950/40 border border-amber-800/60 px-3.5 py-2.5 rounded-xl">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-400" />
-          <span>{errorMessage}</span>
+        <div className="mt-3 text-xs text-red-600 bg-red-50 p-2 rounded-lg border border-red-200">
+          {errorMessage}
         </div>
       )}
     </div>

@@ -70,6 +70,23 @@ export interface TeammateProfile {
   language_label: string;
   avatar: string;
   is_current_sender?: boolean;
+  recipient_type?: 'individual' | 'group';
+  whatsapp_number?: string;
+  email?: string;
+  group_name?: string;
+  last_dispatched_at?: string;
+  dispatched_channel?: 'whatsapp' | 'whatsapp_group' | 'email';
+}
+
+export interface DispatchRecord {
+  id: string;
+  teammate_id: string;
+  recipient_name: string;
+  channel: 'whatsapp' | 'whatsapp_group' | 'email';
+  language: string;
+  headline: string;
+  timestamp: string;
+  status: 'sent' | 'delivered';
 }
 
 // API Responses

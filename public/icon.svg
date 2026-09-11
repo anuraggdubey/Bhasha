@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" fill="none">
+  <!-- Shirorekha (Top Bar) -->
+  <line x1="22" y1="7" x2="39" y2="7" stroke="#252522" stroke-width="3.5" stroke-linecap="round"/>
+  
+  <!-- Half Bha (भ्) -->
+  <path d="M 12 14.5 C 10.5 12, 12 8.5, 15 8.5 C 18 8.5, 19.5 11, 19.5 14 L 19.5 25 C 19.5 28.5, 15.5 30, 13 28 C 10.5 26, 12.5 22.5, 16 22.5 L 26 22.5" stroke="#252522" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  
+  <!-- PC Active Microphone Body -->
+  <rect x="28.5" y="11.5" width="7" height="12" rx="3.5" fill="#252522"/>
+  
+  <!-- Mic Pickup Cradle -->
+  <path d="M 25.5 17 C 25.5 23.5, 38.5 23.5, 38.5 17" stroke="#252522" stroke-width="3" stroke-linecap="round" fill="none"/>
+  
+  <!-- Mic Stem -->
+  <line x1="32" y1="23.5" x2="32" y2="29.5" stroke="#252522" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Mic Base Stand -->
+  <line x1="27" y1="29.5" x2="37" y2="29.5" stroke="#252522" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- PC Active Mic Indicator Dot (Live signal indicator) -->
+  <circle cx="39" cy="9.5" r="2.5" fill="#ED5A31"/>
+</svg>

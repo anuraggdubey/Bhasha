@@ -40,21 +40,21 @@ export const HeroSection: React.FC = () => {
           {/* Call to Actions */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <Link
-              href="/dashboard"
+              href="/studio"
               className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-base font-bold bg-gradient-to-r from-teal-400 via-teal-500 to-emerald-400 hover:from-teal-300 hover:to-emerald-300 text-slate-950 shadow-xl shadow-teal-500/25 hover:shadow-teal-500/40 transition-all hover:scale-[1.03] group"
             >
               <Mic className="w-5 h-5 text-slate-950 group-hover:scale-110 transition-transform" />
-              <span>Launch Live Split-Screen Demo</span>
+              <span>Launch Voice Studio</span>
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </Link>
 
-            <a
-              href="#how-it-works"
+            <Link
+              href="/team"
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-4 rounded-2xl text-base font-semibold bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-slate-700/80 hover:border-slate-600 transition-all"
             >
-              <ShieldCheck className="w-4 h-4 text-teal-400" />
-              <span>How Fact-Lock Works</span>
-            </a>
+              <Globe className="w-4 h-4 text-teal-400" />
+              <span>Explore Team Relay</span>
+            </Link>
           </div>
 
           {/* Live Micro-Preview Glass Card */}
@@ -78,10 +78,10 @@ export const HeroSection: React.FC = () => {
               </div>
 
               <Link
-                href="/dashboard"
+                href="/studio"
                 className="self-start md:self-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-950/80 border border-teal-600/50 text-teal-300 text-xs font-semibold hover:bg-teal-900 transition-colors"
               >
-                <span>Simulate In Dashboard</span>
+                <span>Try In Studio</span>
                 <ArrowRight className="w-3 h-3" />
               </Link>
             </div>

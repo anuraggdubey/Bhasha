@@ -38,11 +38,44 @@ export const MeaningPacketSchema = z.object({
 // ============================================================================
 
 async function queryLLM(systemPrompt: string, userPrompt: string): Promise<string | null> {
+  const groqKey = process.env.GROQ_API_KEY;
   const openaiKey = process.env.OPENAI_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const geminiKey = process.env.GEMINI_API_KEY;
 
-  // 1. Try OpenAI if key is valid
+  // 1. Primary: Try Groq (Ultra-fast LLM)
+  if (groqKey && !groqKey.includes('your_') && groqKey.trim() !== '') {
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${groqKey.trim()}`,
+        },
+        body: JSON.stringify({
+          model: 'openai/gpt-oss-20b',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.1,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const content = data.choices?.[0]?.message?.content;
+        if (content) return content;
+      } else {
+        const errText = await res.text();
+        console.warn(`[LLM Service] Groq error (${res.status}): ${errText}`);
+      }
+    } catch (e) {
+      console.warn('[LLM Service] Groq query failed, checking next provider...', e);
+    }
+  }
+
+  // 2. Try OpenAI if key is valid
   if (openaiKey && !openaiKey.includes('your_') && openaiKey.trim() !== '') {
     try {
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -128,23 +161,23 @@ export async function extractMeaningPacket(transcript: string): Promise<MeaningP
   const isMockMode = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
 
   if (!isMockMode) {
-    const systemPrompt = `You are Bhasha's multilingual meaning packet extraction engine.
-Given an unstructured or code-switched voice transcript (e.g. Hinglish, Japanese-English, etc.), extract an immutable "Meaning Packet".
-You MUST extract:
-- "action": The core task or operation to perform (string).
-- "locked_fields":
-  - "owner": The explicit assignee or person responsible (e.g. "Rahul", "Kenji"). If unspecified, return null. DO NOT GUESS.
-  - "deadline": The exact stated date/time/deadline (e.g. "Tomorrow, 4:00 PM IST"). If unspecified, return null.
-  - "conditions": Array of gating criteria or prerequisites (e.g. ["Only after tests pass", "Pending PR approval"]).
-  - "critical_values": Array of key-value pairs for technical specs, versions, counts (e.g. [{"label": "Version", "value": "v2.4.0"}]).
-- "detected_languages": Array of ISO language codes present in the speech (e.g. ["hi", "en"]).
+    const systemPrompt = `You are Bhasha's multilingual speech normalization and meaning extraction engine.
+Given the user's spoken voice note (which might be in English, Hinglish, Hindi, or any other language):
+1. "english_transcript": Convert, transliterate, or translate whatever the user spoke into clean, fluent, natural English text in the Roman/Latin alphabet. Even if the user spoke in Hindi or Hinglish, or if the transcription came in Devanagari Hindi characters, convert it cleanly into English. NEVER return Devanagari Hindi characters in english_transcript. It MUST be in clear English.
+2. "action": The clear summary or core intent of what was spoken (string).
+3. "locked_fields":
+   - "owner": The explicit assignee or person responsible (e.g. "Rahul", "Kenji"). If unspecified, return null. DO NOT GUESS.
+   - "deadline": The exact stated date/time/deadline (e.g. "5:00 PM", "Tomorrow 4:00 PM IST"). If unspecified, return null.
+   - "conditions": Array of gating criteria or prerequisites (e.g. ["If everyone is free"]).
+   - "critical_values": Array of key-value pairs for technical specs, versions, counts.
+4. "detected_languages": Array of ISO language codes present in the original speech (e.g. ["hi", "en"]).
 
 CRITICAL RULES:
-1. Preserve names, numbers, and deadlines verbatim in locked_fields.
-2. If any entity is missing or ambiguous, set it to null or omit rather than hallucinating.
+1. "english_transcript" MUST be in clear English text (Latin script).
+2. If any entity is missing, set it to null or [] rather than hallucinating.
 3. Return STRICT JSON conforming to the structure described.`;
 
-    const userPrompt = `Transcript:\n"${transcript}"`;
+    const userPrompt = `Spoken Voice Input:\n"${transcript}"`;
 
     const rawJson = await queryLLM(systemPrompt, userPrompt);
     if (rawJson) {
@@ -155,9 +188,9 @@ CRITICAL RULES:
         const packetCandidate: MeaningPacket = {
           task_id: uuidv4(),
           version: 1,
-          raw_transcript: transcript,
-          detected_languages: Array.isArray(parsed.detected_languages) ? parsed.detected_languages : ['hi', 'en'],
-          action: parsed.action || 'Execute assigned task',
+          raw_transcript: parsed.english_transcript || transcript,
+          detected_languages: Array.isArray(parsed.detected_languages) ? parsed.detected_languages : ['en'],
+          action: parsed.action || parsed.english_transcript || transcript,
           locked_fields: {
             owner: parsed.locked_fields?.owner || null,
             deadline: parsed.locked_fields?.deadline || null,
@@ -281,36 +314,41 @@ export async function renderTaskCards(
 ): Promise<RenderedCard[]> {
   const isMockMode = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
   const hasLLMKey = Boolean(
-    process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY
+    process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY
   );
 
-  // If live LLM is configured, dynamically generate localized idiomatic cards
+  // If live LLM is configured (Groq, OpenAI, Anthropic, Gemini), dynamically generate localized output
   if (hasLLMKey && !isMockMode) {
     try {
       const renders: RenderedCard[] = [];
+      const userSpokenText = packet.raw_transcript || packet.action;
 
       for (const lang of targetLanguages) {
         const meta = LANGUAGE_METADATA[lang] || {
           label: lang.toUpperCase(),
-          defaultHeadline: 'Task Assignment',
+          defaultHeadline: 'Rendered Output',
         };
 
-        const systemPrompt = `You are Bhasha's zero-drift task rendering engine for language "${meta.label}" (${lang}).
-Translate and formulate an idiomatic, natural instruction card for a team member.
+        const systemPrompt = `You are Bhasha's real-time multilingual translation and voice conversion engine.
+Your task is to translate whatever the user spoke into "${meta.label}" (${lang}).
 
-CRITICAL ZERO-DRIFT INVARIANT RULES:
-1. LOCKED OWNER: "${packet.locked_fields.owner || 'Unassigned'}". You must keep this name exactly intact or with strict phonetic bracket.
-2. LOCKED DEADLINE: "${packet.locked_fields.deadline || 'No deadline'}". Must retain the exact time string (e.g. 4:00 PM IST).
-3. CONDITIONS: ${JSON.stringify(packet.locked_fields.conditions)}. Gating conditions must be clear.
-4. ACTION: "${packet.action}".
+CRITICAL TRANSLATION RULES:
+1. Translate the USER'S ACTUAL SPOKEN WORDS faithfully and naturally into ${meta.label}.
+   DO NOT generate a canned template like "Team Member is assigned to deploy application".
+   Translate what the user actually said!
+2. If there are key locked facts (such as a time "${packet.locked_fields.deadline || ''}", or person "${packet.locked_fields.owner || ''}"), ensure they are preserved accurately with zero drift.
+3. "headline": A short natural headline in ${meta.label} reflecting the topic (e.g. "Meeting Update", "Rendered Result", "Voice Note"). NEVER use "Task Assignment" unless the user explicitly gave an assignment.
+4. "body": The faithful, natural translation of the user's spoken words in ${meta.label}.
 
 Return strictly valid JSON:
 {
   "headline": "Short title in ${meta.label}",
-  "body": "Natural idiomatic instruction in ${meta.label} including the locked owner, deadline, and conditions."
+  "body": "Natural, faithful translation of the user's spoken words in ${meta.label}"
 }`;
 
-        const raw = await queryLLM(systemPrompt, `Render for Meaning Packet v${packet.version}`);
+        const userPrompt = `Translate this spoken text into ${meta.label} (${lang}):\n"${userSpokenText}"`;
+
+        const raw = await queryLLM(systemPrompt, userPrompt);
         if (raw) {
           const cleaned = raw.trim().replace(/^```json\s*/i, '').replace(/\s*```$/i, '');
           const parsed = JSON.parse(cleaned);
@@ -321,7 +359,7 @@ Return strictly valid JSON:
             language_code: lang,
             language_label: meta.label,
             rendered_headline: parsed.headline || meta.defaultHeadline,
-            rendered_body: parsed.body,
+            rendered_body: parsed.body || userSpokenText,
             displayed_locked_fields: {
               owner: packet.locked_fields.owner || 'Unassigned',
               deadline: packet.locked_fields.deadline || 'No deadline',
@@ -338,7 +376,7 @@ Return strictly valid JSON:
 
       return renders;
     } catch (err) {
-      console.warn('[LLM Service] Dynamic rendering failed, using verified high-fidelity templates:', err);
+      console.warn('[LLM Service] Dynamic rendering failed, using verified templates:', err);
     }
   }
 
@@ -349,43 +387,33 @@ Return strictly valid JSON:
 function generateTemplateRender(packet: MeaningPacket, lang: string): RenderedCard {
   const meta = LANGUAGE_METADATA[lang] || {
     label: lang.toUpperCase(),
-    defaultHeadline: 'Task Assignment',
+    defaultHeadline: 'Rendered Output',
   };
 
-  const owner = packet.locked_fields.owner || 'Team Member';
-  const deadline = packet.locked_fields.deadline || 'Specified Deadline';
-  const action = packet.action;
-  const conditionsText = packet.locked_fields.conditions.join(', ');
+  const userText = packet.raw_transcript || packet.action;
+  const owner = packet.locked_fields.owner;
+  const deadline = packet.locked_fields.deadline;
 
-  let headline = meta.defaultHeadline;
-  let body = '';
+  let headline = meta.defaultHeadline || 'Rendered Output';
+  let body = userText;
 
-  switch (lang) {
-    case 'hi':
-      headline = 'कार्य आवंटन';
-      body = `${owner} को ${deadline} तक ${action} पूरा करना है। पूर्व शर्त: ${conditionsText || 'सभी टेस्ट पास होने चाहिए'}।`;
-      break;
-
-    case 'ja':
-      headline = '割り当てタスク';
-      body = `${owner}は${deadline}までに${action}を実行してください。前提条件: ${conditionsText || 'テスト合格後のみ実行'}。`;
-      break;
-
-    case 'es':
-      headline = 'Asignación de Tarea';
-      body = `${owner} debe completar "${action}" antes de ${deadline}. Condición: ${conditionsText || 'solo después de que pasen las pruebas'}.`;
-      break;
-
-    case 'de':
-      headline = 'Aufgabenzuweisung';
-      body = `${owner} muss "${action}" bis spätestens ${deadline} ausführen. Bedingung: ${conditionsText || 'erst nach bestandenen Tests'}.`;
-      break;
-
-    case 'en':
-    default:
-      headline = 'Task Assignment';
-      body = `${owner} is assigned to ${action.toLowerCase()} by ${deadline}, subject to: ${conditionsText || 'all tests passing'}.`;
-      break;
+  if (owner && deadline) {
+    switch (lang.toLowerCase()) {
+      case 'hi':
+        headline = 'अनुवादित परिणाम';
+        body = `${owner} के लिए (${deadline}): ${userText}`;
+        break;
+      case 'ja':
+        headline = '翻訳結果';
+        body = `${owner}様 (${deadline}): ${userText}`;
+        break;
+      case 'es':
+        headline = 'Resultado';
+        body = `Para ${owner} (${deadline}): ${userText}`;
+        break;
+      default:
+        body = `For ${owner} (${deadline}): ${userText}`;
+    }
   }
 
   return {
@@ -414,7 +442,7 @@ export async function parseVoiceDelta(
 ): Promise<VoiceDeltaChange[]> {
   const isMockMode = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
   const hasLLMKey = Boolean(
-    process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY
+    process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY
   );
 
   // If LLM available, extract semantic delta diff

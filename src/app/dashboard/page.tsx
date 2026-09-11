@@ -2,321 +2,341 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { TEAMMATE_PROFILES as INITIAL_TEAMMATES, DEFAULT_SAMPLE_PACKET, DEFAULT_SAMPLE_RENDERS } from '@/lib/mockData';
-import { MeaningPacket, RenderedCard, TeammateProfile } from '@/types';
-import { AudioRecorder } from '@/components/AudioRecorder';
-import { TaskCard } from '@/components/TaskCard';
-import { FactLockProof } from '@/components/FactLockProof';
-import { CorrectionModal } from '@/components/CorrectionModal';
-import { PipelineVisualizer } from '@/components/PipelineVisualizer';
-import { MeaningPacketInspector } from '@/components/MeaningPacketInspector';
-import { DemoModeBanner } from '@/components/DemoModeBanner';
-import { ManagerDispatchReview } from '@/components/ManagerDispatchReview';
-import { CorrectionHistoryTimeline } from '@/components/CorrectionHistoryTimeline';
-import { DisambiguationGuard } from '@/components/DisambiguationGuard';
-import { AddTeammateModal } from '@/components/AddTeammateModal';
-import { PerspectiveViewToggle, DashboardViewMode } from '@/components/PerspectiveViewToggle';
-import { Radio, Sparkles, RefreshCw, Cpu, CheckCircle, ArrowLeft, Users, ShieldCheck, UserPlus } from 'lucide-react';
+import { MeaningPacket, TeammateProfile } from '@/types';
+import {
+  DEFAULT_SAMPLE_PACKET,
+  TEAMMATE_PROFILES,
+} from '@/lib/mockData';
+import {
+  Mic,
+  Users,
+  ShieldCheck,
+  ArrowRight,
+  Sparkles,
+  Lock,
+  CheckCircle2,
+  Globe,
+  Layers,
+  ArrowUpRight,
+} from 'lucide-react';
 
 export default function DashboardPage() {
-  const [activeTask, setActiveTask] = useState<MeaningPacket>(DEFAULT_SAMPLE_PACKET);
-  const [renders, setRenders] = useState<RenderedCard[]>(DEFAULT_SAMPLE_RENDERS);
-  const [teammates, setTeammates] = useState<TeammateProfile[]>(INITIAL_TEAMMATES);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedTeammateForCorrection, setSelectedTeammateForCorrection] =
-    useState<TeammateProfile | null>(null);
+  const [tasks, setTasks] = useState<MeaningPacket[]>([DEFAULT_SAMPLE_PACKET]);
   const [notification, setNotification] = useState<string | null>(null);
-  const [isDispatched, setIsDispatched] = useState(true);
-  const [isAddTeammateOpen, setIsAddTeammateOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<DashboardViewMode>('split');
 
-  // Connect to Server-Sent Events (SSE) for real-time split-screen updates
+  // Load tasks from backend /api/tasks
   useEffect(() => {
-    let eventSource: EventSource | null = null;
-
-    try {
-      eventSource = new EventSource('/api/events');
-
-      eventSource.onmessage = (event) => {
-        try {
-          const parsed = JSON.parse(event.data);
-          if (parsed.type === 'TASK_MODIFIED') {
-            setActiveTask(parsed.data.task);
-            setRenders(parsed.data.renders);
-            showNotification('⚡ Voice correction applied: Deadline locked across all views!');
-          }
-        } catch (e) {
-          // heartbeat
+    fetch('/api/tasks')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.tasks && data.tasks.length > 0) {
+          setTasks(data.tasks);
         }
-      };
-    } catch (err) {
-      console.warn('SSE connection skipped or unsupported');
-    }
-
-    return () => {
-      if (eventSource) eventSource.close();
-    };
+      })
+      .catch((err) => console.warn('Could not load tasks:', err));
   }, []);
 
-  const showNotification = (msg: string) => {
-    setNotification(msg);
-    setTimeout(() => setNotification(null), 4000);
-  };
-
-  // Pipeline flow: Transcribe -> Extract Meaning Packet -> Render Multi-language
-  const handleTranscriptReady = async (transcript: string) => {
-    setIsProcessing(true);
-    setIsDispatched(false);
-    showNotification('Processing speech with AssemblyAI Universal-3.5 Pro...');
-
-    try {
-      // 1. Extract Meaning Packet
-      const extractRes = await fetch('/api/extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript }),
-      });
-      const extractData = await extractRes.json();
-      const newPacket = extractData.packet || DEFAULT_SAMPLE_PACKET;
-      setActiveTask(newPacket);
-
-      // 2. Render Cards in Hindi, Japanese, and English
-      const targetLanguages = teammates.map((t) => t.preferred_language);
-      const renderRes = await fetch('/api/render', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          task_id: newPacket.task_id,
-          target_languages: targetLanguages,
-        }),
-      });
-      const renderData = await renderRes.json();
-      if (renderData.renders) {
-        setRenders(renderData.renders);
-      }
-
-      showNotification('✅ Meaning Packet extracted! Ready for Manager Review.');
-    } catch (err) {
-      console.error('Pipeline error:', err);
-      showNotification('Using demo sample packet.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // Voice delta correction
-  const handleCorrectionSubmit = async (correctionTranscript: string) => {
-    setIsProcessing(true);
-    try {
-      const res = await fetch('/api/correct', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          task_id: activeTask.task_id,
-          correction_transcript: correctionTranscript,
-        }),
-      });
-      const data = await res.json();
-      if (data.updated_packet && data.renders) {
-        setActiveTask(data.updated_packet);
-        setRenders(data.renders);
-        showNotification('⚡ Shared packet updated! All views refreshed.');
-      }
-    } catch (err) {
-      console.error('Correction failed:', err);
-    } finally {
-      setIsProcessing(false);
-      setSelectedTeammateForCorrection(null);
-    }
-  };
-
-  const handleResetDemo = () => {
-    setActiveTask(DEFAULT_SAMPLE_PACKET);
-    setRenders(DEFAULT_SAMPLE_RENDERS);
-    setTeammates(INITIAL_TEAMMATES);
-    setIsDispatched(true);
-    showNotification('Demo state reset to initial Hinglish assignment.');
-  };
-
-  const handleAddTeammate = (newTeammate: TeammateProfile, newCard: RenderedCard) => {
-    setTeammates((prev) => [...prev, newTeammate]);
-    setRenders((prev) => [...prev, newCard]);
-    showNotification(`✨ Added ${newTeammate.name} (${newTeammate.language_label}) to live relay!`);
-  };
-
   return (
-    <main className="min-h-screen p-4 md:p-8 max-w-7xl mx-auto flex flex-col justify-between">
-      <div>
-        {/* Top Breadcrumb & Control Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5 mb-6">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-700 transition-all"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              Landing Page
-            </Link>
+    <div className="relative min-h-screen bg-[#FFFCFA] text-[#252522]">
+      {/* Ambient Grid */}
+      <div className="absolute inset-0 ambient-grid pointer-events-none z-0 opacity-40" />
 
-            <div className="h-4 w-px bg-slate-800" />
-
-            <div>
-              <h1 className="text-xl md:text-2xl font-black text-white flex items-center gap-2.5">
-                Bhasha Relay Station
-                <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/30">
-                  Universal-3.5
-                </span>
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsAddTeammateOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-950/80 hover:bg-teal-900 text-teal-300 border border-teal-700/60 text-xs font-bold transition-all shadow-sm hover:scale-105"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>+ Add Language Relay</span>
-            </button>
-
-            <button
-              onClick={handleResetDemo}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold transition-all"
-              title="Reset to Initial Demo State"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              Reset
-            </button>
-          </div>
-        </div>
-
-        {/* Global Toast Notification */}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+        {/* Toast Notification */}
         {notification && (
-          <div className="fixed top-20 right-5 z-50 animate-in slide-in-from-top duration-300">
-            <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-teal-950/95 border border-teal-500 text-teal-200 text-xs font-semibold shadow-2xl backdrop-blur-md">
-              <Sparkles className="w-4 h-4 text-teal-400" />
+          <div className="fixed top-20 right-6 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#252522] text-[#FFFCFA] text-xs font-medium shadow-lg">
+              <Sparkles className="w-3.5 h-3.5 text-[#D1E043]" />
               <span>{notification}</span>
             </div>
           </div>
         )}
 
-        {/* Showcase Mode Notice */}
-        <DemoModeBanner />
+        {/* Dashboard Top Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-black/[0.08] pb-6">
+          <div>
+            <h1 className="font-editorial text-4xl sm:text-5xl font-normal tracking-tight text-[#252522] mb-2">
+              System Overview
+            </h1>
+            <p className="text-base text-[#6B6B65] font-sans">
+              Monitor active voice notes, multilingual relays, and zero-drift invariant proofs across your team.
+            </p>
+          </div>
 
-        {/* Perspective Mode Switcher */}
-        <PerspectiveViewToggle
-          currentMode={viewMode}
-          onModeChange={(mode) => setViewMode(mode)}
-        />
+          <div className="flex items-center gap-3">
+            <Link
+              href="/studio"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#252522] hover:bg-[#383834] text-[#FFFCFA] font-medium text-xs shadow-xs transition-all hover:scale-105"
+            >
+              <Mic className="w-3.5 h-3.5 text-[#D1E043]" />
+              <span>Record Voice Note</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
 
-        {/* Pipeline Telemetry Tracker */}
-        <PipelineVisualizer isProcessing={isProcessing} />
+        {/* High-Level Editorial Stat Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="editorial-card p-6 bg-white">
+            <div className="flex items-center justify-between mb-3 text-xs font-mono uppercase text-[#7A7A72]">
+              <span>Active Tasks</span>
+              <Layers className="w-4 h-4 text-[#252522]" />
+            </div>
+            <div className="font-editorial text-4xl font-normal text-[#252522]">
+              {tasks.length}
+            </div>
+            <p className="text-xs text-[#6B6B65] mt-1.5 font-sans flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#5B6F00]"></span>
+              Synchronized across all relays
+            </p>
+          </div>
 
-        {/* Manager Speech Ingestion Box (Always visible in Split or Sender mode) */}
-        {(viewMode === 'split' || viewMode === 'sender') && (
-          <section className="mb-6">
-            <AudioRecorder
-              onTranscriptReady={handleTranscriptReady}
-              isProcessing={isProcessing}
-            />
-          </section>
-        )}
+          <div className="editorial-card p-6 bg-white">
+            <div className="flex items-center justify-between mb-3 text-xs font-mono uppercase text-[#7A7A72]">
+              <span>Relay Locales</span>
+              <Globe className="w-4 h-4 text-[#252522]" />
+            </div>
+            <div className="font-editorial text-4xl font-normal text-[#252522]">
+              18 Locales
+            </div>
+            <p className="text-xs text-[#6B6B65] mt-1.5 font-sans">
+              English, Hindi, Japanese, Spanish & more
+            </p>
+          </div>
 
-        {/* Pre-Broadcast Manager Review Gate */}
-        <ManagerDispatchReview
-          packet={activeTask}
-          onConfirmDispatch={() => {
-            setIsDispatched(true);
-            showNotification('🚀 Task broadcasted to all teammate relays with locked facts!');
-          }}
-          isDispatched={isDispatched}
-          onOpenVoiceCorrection={() => setSelectedTeammateForCorrection(teammates[0])}
-        />
+          <div className="editorial-card p-6 bg-white">
+            <div className="flex items-center justify-between mb-3 text-xs font-mono uppercase text-[#7A7A72]">
+              <span>Fact Drift Rate</span>
+              <ShieldCheck className="w-4 h-4 text-[#5B6F00]" />
+            </div>
+            <div className="font-editorial text-4xl font-normal text-[#5B6F00]">
+              0.00%
+            </div>
+            <p className="text-xs text-[#6B6B65] mt-1.5 font-sans">
+              Mathematical invariant guarantee
+            </p>
+          </div>
 
-        {/* Disambiguation & Entity Safety Check */}
-        <DisambiguationGuard packet={activeTask} />
+          <div className="editorial-card p-6 bg-white">
+            <div className="flex items-center justify-between mb-3 text-xs font-mono uppercase text-[#7A7A72]">
+              <span>Connected Members</span>
+              <Users className="w-4 h-4 text-[#ED5A31]" />
+            </div>
+            <div className="font-editorial text-4xl font-normal text-[#252522]">
+              {TEAMMATE_PROFILES.length} Active
+            </div>
+            <p className="text-xs text-[#6B6B65] mt-1.5 font-sans">
+              Real-time localized feeds
+            </p>
+          </div>
+        </div>
 
-        {/* Multilingual Team Relay (Visible in Split or Receiver mode) */}
-        {(viewMode === 'split' || viewMode === 'receiver') && (
-          <section className="space-y-4 mb-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        {/* Feature Navigation Hub */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-editorial text-2xl font-normal text-[#252522]">
+              Core Workspaces
+            </h2>
+            <span className="text-xs text-[#7A7A72]">Select an area to explore</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Card 1: Studio */}
+            <Link
+              href="/studio"
+              className="editorial-card p-6 bg-white group flex flex-col justify-between hover:border-black/20 transition-all hover:shadow-md"
+            >
               <div>
-                <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-teal-400" />
-                  Live Multilingual Team Relay ({teammates.length} Synchronized Views)
-                </h2>
-                <p className="text-xs text-slate-400">
-                  Every card renders in the teammate&apos;s preferred language while owner, deadline, and conditions remain 100% locked.
+                <div className="w-10 h-10 rounded-full bg-[#F7F7F2] border border-black/[0.06] text-[#252522] flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                  <Mic className="w-5 h-5 text-[#ED5A31]" />
+                </div>
+                <h3 className="font-editorial text-xl font-normal text-[#252522] mb-2 group-hover:text-[#ED5A31] transition-colors">
+                  Voice Studio
+                </h3>
+                <p className="text-xs text-[#6B6B65] leading-relaxed font-sans">
+                  Dictate spontaneous speech in Hinglish or English. Bhasha locks factual commitments and renders tasks into any language.
                 </p>
               </div>
+              <div className="mt-6 pt-4 border-t border-black/[0.06] flex items-center justify-between text-xs font-medium text-[#252522]">
+                <span>Open Studio</span>
+                <ArrowUpRight className="w-4 h-4 text-[#7A7A72] group-hover:text-[#252522] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </div>
+            </Link>
 
-              <button
-                onClick={() => setIsAddTeammateOpen(true)}
-                className="self-start sm:self-center text-xs font-mono text-teal-300 hover:text-teal-200 underline"
+            {/* Card 2: Team Relay */}
+            <Link
+              href="/team"
+              className="editorial-card p-6 bg-white group flex flex-col justify-between hover:border-black/20 transition-all hover:shadow-md"
+            >
+              <div>
+                <div className="w-10 h-10 rounded-full bg-[#F7F7F2] border border-black/[0.06] text-[#252522] flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                  <Users className="w-5 h-5 text-[#5B6F00]" />
+                </div>
+                <h3 className="font-editorial text-xl font-normal text-[#252522] mb-2 group-hover:text-[#5B6F00] transition-colors">
+                  Team Relay
+                </h3>
+                <p className="text-xs text-[#6B6B65] leading-relaxed font-sans">
+                  Inspect inboxes for each teammate. Teammates receive instructions in their native language and submit spoken corrections.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-black/[0.06] flex items-center justify-between text-xs font-medium text-[#252522]">
+                <span>View Team Inboxes</span>
+                <ArrowUpRight className="w-4 h-4 text-[#7A7A72] group-hover:text-[#252522] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </div>
+            </Link>
+
+            {/* Card 3: Invariant Audit */}
+            <Link
+              href="/audit"
+              className="editorial-card p-6 bg-white group flex flex-col justify-between hover:border-black/20 transition-all hover:shadow-md"
+            >
+              <div>
+                <div className="w-10 h-10 rounded-full bg-[#F7F7F2] border border-black/[0.06] text-[#252522] flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                  <ShieldCheck className="w-5 h-5 text-[#252522]" />
+                </div>
+                <h3 className="font-editorial text-xl font-normal text-[#252522] mb-2 group-hover:text-[#252522] transition-colors">
+                  Invariant Audit
+                </h3>
+                <p className="text-xs text-[#6B6B65] leading-relaxed font-sans">
+                  Inspect the side-by-side proof matrix and version audit log proving that assignees and deadlines never drift in translation.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-black/[0.06] flex items-center justify-between text-xs font-medium text-[#252522]">
+                <span>Inspect Audit Matrix</span>
+                <ArrowUpRight className="w-4 h-4 text-[#7A7A72] group-hover:text-[#252522] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </div>
+            </Link>
+          </div>
+        </div>
+
+        {/* Active Tasks Table */}
+        <div className="editorial-card p-6 bg-white">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-black/[0.06] gap-2">
+            <div>
+              <h3 className="font-editorial text-xl font-normal text-[#252522]">
+                Active Relayed Tasks
+              </h3>
+              <p className="text-xs text-[#6B6B65]">
+                Tasks currently synchronized across team members with locked invariants.
+              </p>
+            </div>
+            <Link
+              href="/team"
+              className="text-xs font-medium text-[#252522] hover:underline flex items-center gap-1"
+            >
+              <span>View all in Team Relay</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs font-sans">
+              <thead>
+                <tr className="border-b border-black/[0.06] text-[#7A7A72]">
+                  <th className="py-3 px-3 font-medium uppercase">Task Instruction</th>
+                  <th className="py-3 px-3 font-medium uppercase">Assignee</th>
+                  <th className="py-3 px-3 font-medium uppercase">Deadline</th>
+                  <th className="py-3 px-3 font-medium uppercase">Relay Languages</th>
+                  <th className="py-3 px-3 font-medium uppercase">Version</th>
+                  <th className="py-3 px-3 font-medium uppercase">Status</th>
+                  <th className="py-3 px-3 font-medium uppercase text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-black/[0.04]">
+                {tasks.map((task) => (
+                  <tr key={task.task_id} className="hover:bg-[#F7F7F2]/60 transition-colors">
+                    <td className="py-3.5 px-3 font-medium text-[#252522] max-w-xs truncate">
+                      {task.action}
+                    </td>
+                    <td className="py-3.5 px-3">
+                      <span className="font-semibold text-[#252522] flex items-center gap-1">
+                        <Lock className="w-3 h-3 text-[#5B6F00]" />
+                        {task.locked_fields.owner || 'Unassigned'}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-3 font-mono text-[#ED5A31]">
+                      {task.locked_fields.deadline || 'No deadline'}
+                    </td>
+                    <td className="py-3.5 px-3">
+                      <div className="flex items-center gap-1">
+                        {task.detected_languages.map((l) => (
+                          <span
+                            key={l}
+                            className="px-2 py-0.5 rounded-full bg-[#F7F7F2] border border-black/[0.06] text-[10px] font-mono uppercase text-[#252522]"
+                          >
+                            {l}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-3 font-mono font-semibold text-[#252522]">
+                      v{task.version}.0
+                    </td>
+                    <td className="py-3.5 px-3">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#F7F7F2] text-[#5B6F00] border border-black/[0.06]">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Synchronized
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-3 text-right">
+                      <Link
+                        href="/team"
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#F7F7F2] hover:bg-[#EFEFEA] text-[#252522] text-xs font-medium transition-colors"
+                      >
+                        <span>Inspect</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Active Teammates Roster */}
+        <div className="editorial-card p-6 bg-white">
+          <div className="flex items-center justify-between pb-3 mb-5 border-b border-black/[0.06]">
+            <div>
+              <h3 className="font-editorial text-xl font-normal text-[#252522]">
+                Synchronized Relay Teammates
+              </h3>
+              <p className="text-xs text-[#6B6B65]">
+                Team members receiving tasks translated automatically into their native language.
+              </p>
+            </div>
+            <Link
+              href="/team"
+              className="text-xs font-medium text-[#252522] hover:underline flex items-center gap-1"
+            >
+              <span>Manage Team</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {TEAMMATE_PROFILES.map((profile) => (
+              <div
+                key={profile.id}
+                className="p-4 rounded-xl bg-[#F7F7F2] border border-black/[0.06] flex items-center justify-between"
               >
-                + Add Another Language (Spanish, German, etc.)
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {teammates.map((teammate) => {
-                const card = renders.find((r) => r.language_code === teammate.preferred_language);
-                return (
-                  <TaskCard
-                    key={teammate.id}
-                    teammate={teammate}
-                    card={card}
-                    rawTranscript={activeTask?.raw_transcript}
-                    onOpenCorrection={(t) => setSelectedTeammateForCorrection(t)}
-                    onConfirmTask={() =>
-                      showNotification(`Task accepted and confirmed by ${teammate.name}!`)
-                    }
-                  />
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* Fact-Lock Proof View (Visible in Split or Proof mode) */}
-        {(viewMode === 'split' || viewMode === 'proof') && (
-          <section className="mb-6">
-            <FactLockProof packet={activeTask} renders={renders} />
-          </section>
-        )}
-
-        {/* Revision Timeline / Audit Trail */}
-        <CorrectionHistoryTimeline packet={activeTask} />
-
-        {/* Meaning Packet JSON Inspector */}
-        <section className="mb-12">
-          <MeaningPacketInspector packet={activeTask} />
-        </section>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl p-1.5 rounded-full bg-white border border-black/[0.06]">
+                    {profile.avatar}
+                  </span>
+                  <div>
+                    <div className="text-sm font-semibold text-[#252522]">{profile.name}</div>
+                    <div className="text-xs text-[#7A7A72]">{profile.role}</div>
+                  </div>
+                </div>
+                <span className="text-xs font-medium text-[#252522] px-2.5 py-1 rounded-full bg-white border border-black/[0.06]">
+                  {profile.language_label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-
-      {/* Voice Correction Modal */}
-      <CorrectionModal
-        isOpen={!!selectedTeammateForCorrection}
-        onClose={() => setSelectedTeammateForCorrection(null)}
-        teammate={selectedTeammateForCorrection}
-        onSubmitCorrection={handleCorrectionSubmit}
-        isSubmitting={isProcessing}
-      />
-
-      {/* Add Teammate Modal */}
-      <AddTeammateModal
-        isOpen={isAddTeammateOpen}
-        onClose={() => setIsAddTeammateOpen(false)}
-        packet={activeTask}
-        onAddTeammate={handleAddTeammate}
-      />
-
-      {/* Dashboard Footer */}
-      <footer className="border-t border-slate-800/80 pt-6 text-center text-xs text-slate-500">
-        <p>
-          <strong className="text-slate-300">Bhasha Relay</strong> — Voice-first task handoff and orchestration for multilingual teams. Powered by AssemblyAI Universal-3.5 Pro.
-        </p>
-      </footer>
-    </main>
+    </div>
   );
 }

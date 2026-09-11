@@ -21,6 +21,9 @@ export async function POST(req: NextRequest) {
     const mimeType = audioFile.type || 'audio/wav';
 
     const result = await transcribeWithAssemblyAI(buffer, mimeType);
+    if (result.status === 'error') {
+      return NextResponse.json(result, { status: 400 });
+    }
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('[API /api/dictate] Internal Error:', error);

@@ -1,26 +1,18 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Navbar } from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
-  title: 'Bhasha — One Meaning, Every Language | Voice-First Task Orchestration',
+  title: 'Bhasha — AI Voice Task Handoff | Zero Drift Multilingual Relay',
   description:
-    'Voice-first task handoff system for multilingual teams powered by AssemblyAI Universal-3.5 Pro and Fact-Locked Meaning Packets. Eliminate translation drift across English, Hindi, Japanese, and more.',
-  keywords: [
-    'AssemblyAI',
-    'Enterprise Voice AI',
-    'Speech-to-text',
-    'Universal-3.5 Pro',
-    'Multilingual Task Handoff',
-    'Fact Locking',
-    'Hinglish',
-    'Zero Fact Drift',
-  ],
-  authors: [{ name: 'Bhasha Engineering Team' }],
-  openGraph: {
-    title: 'Bhasha — Voice-First Multilingual Task Handoff',
-    description: 'Zero fact drift across teams. Speak in Hinglish, assign with guaranteed invariant deadlines and owners.',
-    type: 'website',
+    'Voice-first task handoff for high-velocity teams powered by AssemblyAI Universal-3.5 and Groq Llama 3.3. Speak in any language, eliminate fact drift across 18 team languages.',
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
   },
 };
 
@@ -30,20 +22,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark scroll-smooth">
+    <html lang="en" className="scroll-smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
       </head>
-      <body className="antialiased selection:bg-teal-500/30 selection:text-teal-200 min-h-screen flex flex-col bg-[#080c14] text-slate-100">
+      <body className="antialiased selection:bg-[#5B6F00]/20 selection:text-[#252522] min-h-screen flex flex-col bg-[#FFFCFA] text-[#252522]">
         <Navbar />
-        <div className="flex-1 pt-20">
+        <main className="flex-1 pt-20">
           {children}
-        </div>
+        </main>
+        <Footer />
       </body>
     </html>
   );
