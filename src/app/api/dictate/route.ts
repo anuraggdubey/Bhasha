@@ -6,11 +6,12 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const audioFile = formData.get('audio') as Blob | null;
+    // Accept either 'audio' or 'file' key in the FormData
+    const audioFile = (formData.get('audio') || formData.get('file')) as Blob | null;
 
-    if (!audioFile) {
+    if (!audioFile || audioFile.size === 0) {
       return NextResponse.json(
-        { status: 'error', error: 'No audio file provided in request' },
+        { status: 'error', error: 'No audio file provided or audio file is empty' },
         { status: 400 }
       );
     }

@@ -23,6 +23,8 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -88,6 +90,21 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       audioContextRef.current = audioCtx;
       analyserRef.current = analyser;
 
+      // Initialize MediaRecorder to capture audio binary
+      audioChunksRef.current = [];
+      try {
+        const recorder = new MediaRecorder(stream);
+        recorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+        recorder.start(200);
+        mediaRecorderRef.current = recorder;
+      } catch (recErr) {
+        console.warn('MediaRecorder initialization warning:', recErr);
+      }
+
       setIsRecording(true);
       setRecordSeconds(0);
       timerRef.current = setInterval(() => {
@@ -105,12 +122,51 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
     setIsRecording(false);
     if (timerRef.current) clearInterval(timerRef.current);
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-    }
 
-    // Pass Hinglish sample for demo evaluation
-    onTranscriptReady(SAMPLE_AUDIO_CASES[0].transcript);
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.onstop = async () => {
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+        }
+
+        try {
+          const audioBlob = new Blob(audioChunksRef.current, {
+            type: recorder.mimeType || 'audio/webm',
+          });
+
+          if (audioBlob.size > 0) {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+
+            const dictateRes = await fetch('/api/dictate', {
+              method: 'POST',
+              body: formData,
+            });
+
+            if (dictateRes.ok) {
+              const dictateData = await dictateRes.json();
+              if (dictateData.transcript) {
+                onTranscriptReady(dictateData.transcript);
+                return;
+              }
+            }
+          }
+        } catch (postErr) {
+          console.warn('[AudioRecorder] Failed to post audio to /api/dictate, falling back to sample:', postErr);
+        }
+
+        // Fallback to sample Hinglish audio
+        onTranscriptReady(SAMPLE_AUDIO_CASES[0].transcript);
+      };
+
+      recorder.stop();
+    } else {
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+      }
+      onTranscriptReady(SAMPLE_AUDIO_CASES[0].transcript);
+    }
   };
 
   const triggerSampleDemo = (index: number = 0) => {

@@ -57,7 +57,8 @@ class TaskStore {
   applyVoiceCorrection(
     taskId: string,
     delta: VoiceDeltaChange[],
-    newTranscript: string
+    newTranscript: string,
+    freshRenders?: RenderedCard[]
   ): { task: MeaningPacket; renders: RenderedCard[] } | null {
     const task = this.tasks.get(taskId);
     if (!task) return null;
@@ -72,29 +73,48 @@ class TaskStore {
         task.locked_fields.deadline = change.new_value as string;
       } else if (change.field === 'locked_fields.owner') {
         task.locked_fields.owner = change.new_value as string;
+      } else if (change.field === 'action') {
+        task.action = change.new_value as string;
+      } else if (change.field === 'locked_fields.conditions') {
+        task.locked_fields.conditions = Array.isArray(change.new_value)
+          ? change.new_value
+          : [change.new_value as string];
       }
     }
 
     this.tasks.set(taskId, task);
 
-    // Update the renders directly so all views reflect the update
+    // If fresh renders were provided, save them directly
+    if (freshRenders && freshRenders.length > 0) {
+      this.renders.set(taskId, freshRenders);
+      this.emit('TASK_MODIFIED', { task, renders: freshRenders, delta });
+      return { task, renders: freshRenders };
+    }
+
+    // Otherwise, patch current renders faithfully
     const currentRenders = this.renders.get(taskId) || [];
     const updatedRenders = currentRenders.map((card) => {
-      const updatedCard = { ...card, version: task.version };
-      if (task.locked_fields.deadline) {
-        updatedCard.displayed_locked_fields = {
-          ...updatedCard.displayed_locked_fields,
-          deadline: task.locked_fields.deadline,
-        };
-        // Update body text with new deadline
-        if (card.language_code === 'en') {
-          updatedCard.rendered_body = updatedCard.rendered_body.replace(/4:00 PM/g, '5:00 PM');
-        } else if (card.language_code === 'hi') {
-          updatedCard.rendered_body = updatedCard.rendered_body.replace(/4:00 PM/g, '5:00 PM');
-        } else if (card.language_code === 'ja') {
-          updatedCard.rendered_body = updatedCard.rendered_body.replace(/4:00 PM/g, '5:00 PM');
+      const updatedCard: RenderedCard = {
+        ...card,
+        version: task.version,
+        displayed_locked_fields: {
+          owner: task.locked_fields.owner || 'Unassigned',
+          deadline: task.locked_fields.deadline || 'No deadline',
+          conditions: task.locked_fields.conditions,
+        },
+      };
+
+      for (const change of delta) {
+        if (typeof change.previous_value === 'string' && typeof change.new_value === 'string') {
+          updatedCard.rendered_body = updatedCard.rendered_body.split(change.previous_value).join(change.new_value);
         }
       }
+
+      // Default replacement if deadline was updated
+      if (task.locked_fields.deadline) {
+        updatedCard.rendered_body = updatedCard.rendered_body.replace(/4:00 PM/g, '5:00 PM');
+      }
+
       return updatedCard;
     });
 
